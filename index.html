@@ -15,8 +15,14 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 .logo{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;letter-spacing:.5px;flex:0 0 auto}
 .top h1{font-size:15px;margin:0;font-weight:800;line-height:1.15}
 .top .sub{font-size:11px;opacity:.92;margin-top:2px}
-.sharebtn{margin-left:auto;flex:0 0 auto;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;font:inherit;font-size:12px;font-weight:700;border-radius:9px;padding:7px 12px;cursor:pointer}
+.tbtns{margin-left:auto;display:flex;gap:6px;flex:0 0 auto}
+.sharebtn{flex:0 0 auto;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;font:inherit;font-size:12px;font-weight:700;border-radius:9px;padding:7px 12px;cursor:pointer}
 .sharebtn:active{transform:scale(.96)}
+/* team collection sheet (export / import marks) */
+.teammenu{position:fixed;top:54px;right:10px;z-index:9990;background:var(--card);border:1px solid var(--bd);border-radius:12px;box-shadow:0 12px 32px rgba(8,40,24,.3);display:flex;flex-direction:column;gap:2px;padding:6px}
+.teammenu[hidden]{display:none}
+.teammenu button{font:inherit;font-size:12px;font-weight:700;color:var(--ink);background:none;border:none;border-radius:8px;padding:9px 12px;cursor:pointer;text-align:left;white-space:nowrap}
+.teammenu button:active{background:#e9f2ed}
 
 /* ---------- global finder (across all 18 wards) ---------- */
 .finder{flex:0 0 auto;background:var(--card);border-bottom:1px solid var(--bd);padding:10px 12px}
@@ -37,6 +43,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 .frow .fjump{font-size:10px;color:var(--ac);font-weight:800;margin-top:3px}
 .frow .fdup{display:inline-block;margin-top:4px;font-size:10px;font-weight:800;color:#8a5a00;background:#fff3d6;border-radius:6px;padding:1px 6px}
 .frow .fcall{display:inline-block;margin-left:8px;font-size:11px;font-weight:800;color:var(--ac2);text-decoration:none}
+.frow .fsaved{display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:var(--mut)}
 .frow.empty{color:var(--mut);font-size:12px;text-align:center;padding:12px;cursor:default}
 /* roll-up summary: total matches across wards + per-ward count chips */
 .fsum{border:1px solid var(--ac);background:#e6f4ee;border-radius:10px;padding:8px 10px}
@@ -169,8 +176,19 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     <h1>Pamur Master Voter App</h1>
     <div class="sub" id="topsub">Wards 1–18 · 16,554 voters · pick a ward</div>
   </div>
-  <button class="sharebtn" id="share" type="button">Share</button>
+  <div class="tbtns">
+    <button class="sharebtn" id="report" type="button" title="Copy a progress summary to paste in WhatsApp">Report</button>
+    <button class="sharebtn" id="team" type="button" title="Send or merge your marks with other phones">Team</button>
+    <button class="sharebtn" id="share" type="button">Share</button>
+  </div>
 </header>
+
+<!-- team collection sheet: merge marks across phones (WhatsApp-friendly) -->
+<div class="teammenu" id="teammenu" hidden>
+  <button type="button" id="texp">⬇ Export my marks (JSON)</button>
+  <button type="button" id="timp">⬆ Import marks from a file</button>
+</div>
+<input type="file" id="tfile" accept=".json,application/json" style="display:none">
 
 <!-- global finder: which ward does this voter belong to? -->
 <section class="finder">
@@ -279,7 +297,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   }
 
   /* ================= dashboard ================= */
-  var chipBadges = {}, dashRows = {}, dashOrder = "num", dashSorted = null;
+  var chipBadges = {}, dashRows = {}, dashOrder = "num", dashSorted = null, lastTotals = null;
   function refreshProgress(){
     var totM = 0, totD = 0, totU = 0, totO = 0, totF = 0, totMb = 0, totP = 0;
     dashSorted = WARDS.slice();
@@ -323,6 +341,9 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     $("dsum").textContent = totM + " of " + TOTAL_V.toLocaleString("en-IN");
     $("dcount").textContent = totM.toLocaleString("en-IN") + " of " + TOTAL_V.toLocaleString("en-IN") + " marked on this device";
     $("dflags").textContent = "Dead " + totD + " · Dup " + totU + " · OOS " + totO + " · Families " + totF + " · Phones " + totMb + " · Parties " + totP;
+    // keep a snapshot for the one-tap Report button (it renders after the grid)
+    lastTotals = { m:totM, total:TOTAL_V, d:totD, u:totU, o:totO, f:totF, mb:totMb, p:totP,
+      wards: dashSorted.map(function(w){ return { w:w, marked:(dashRows[w]&&dashRows[w]._m)||0, total:COUNT[w] }; }) };
   }
   $("sortnum").addEventListener("click", function(){
     dashOrder = "num";
@@ -432,7 +453,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   var idxBySerial = {};        // "w_s" -> record (for phone-finder name lookups)
   var fsearch = $("fsearch"), fres = $("fres"), ftimer = null;
   var fmode = 0;              // 0 = voter index, 1 = phone on this device
-  var phoneDirty = true, phoneList = [];
+  var phoneDirty = true, phoneList = [], phoneBySerial = {};
   var NOTES = [
     "Search matches across every ward — tap a result to jump into that ward on that voter.<br>Phone numbers you've typed are kept on your device per ward, so they're not in this index.",
     "Finds the mobile numbers already saved on THIS device, across all 18 wards. Numbers typed on another phone won't appear here.<br>Green ring: same number saved in more than one place — check for duplicates."
@@ -545,12 +566,21 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
       dupHtml = '<div><span class="fdup">⚠ Same number also on ' + esc(r.dup.join(" · ")) + "</span></div>";
     }
     var callHtml = (kind === "phone" && r.num) ? '<a class="fcall" href="tel:' + esc(r.num) + '">Call ▶</a>' : "";
+    var subMeta = (kind === "phone"
+      ? '<div class="fm">☎ ' + esc(r.num) + ' · #' + r.s + '</div>'
+      : '<div class="fm">House ' + esc(r.h) + ' · ' + esc(r.e) + ' · #' + r.s + '</div>');
+    // voter rows: surface a phone already saved on this device, so the field team
+    // can call without switching to the Phone tab first
+    if (kind === "voter"){
+      if (phoneDirty) buildPhone();
+      var saved = phoneBySerial[r.w + "_" + r.s];
+      if (saved){
+        subMeta += '<div><a class="fcall" href="tel:' + esc(saved) + '">☎ ' + esc(saved) + '</a><span class="fsaved">saved on this device</span></div>';
+      }
+    }
     d.innerHTML =
       '<div><span class="fw">Ward ' + r.w + '</span><span class="fn">' + esc(r.n) + '</span> ' + callHtml + '</div>' +
-      (kind === "phone"
-        ? '<div class="fm">☎ ' + esc(r.num) + ' · #' + r.s + '</div>'
-        : '<div class="fm">House ' + esc(r.h) + ' · ' + esc(r.e) + ' · #' + r.s + '</div>') +
-      dupHtml +
+      subMeta + dupHtml +
       '<div class="fjump">Open Ward ' + r.w + ' →</div>';
     d.addEventListener("click", function(){
       if (d.querySelector(".fcall") && event.target.classList.contains("fcall")) return;
@@ -569,6 +599,8 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
         if (dig.length >= 6) phoneList.push({ w:w, s:+s, num:num, dig:dig });
       }
     }
+    phoneBySerial = {};
+    phoneList.forEach(function(r){ phoneBySerial[r.w + "_" + r.s] = r.num; });
     phoneDirty = false;
   }
   function doPhone(val){
@@ -641,6 +673,109 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   $("share").addEventListener("click", function(){
     var u = curWard ? deepLinkURL(curWard, null) : (location.origin + location.pathname);
     copyText(u);
+  });
+
+  /* ================= team collection: export / import / report ================= */
+  var MARKKEYS = ["flags","pty","fams","mob","oos"];
+  function collectMarks(){
+    var out = { app:"pamur-voter-marks", v:1, at:new Date().toISOString(), wards:{} };
+    for (var i = 0; i < WARDS.length; i++){
+      var w = WARDS[i], bag = {};
+      for (var j = 0; j < MARKKEYS.length; j++){
+        var k = MARKKEYS[j], v = getLS(w, k);
+        if (Object.keys(v).length) bag[k] = v;
+      }
+      if (Object.keys(bag).length) out.wards[w] = bag;
+    }
+    return out;
+  }
+  function mergeFlag(a, b){
+    a = a || {}; b = b || {};
+    var m = { d:a.d||b.d, u:a.u||b.u, o:a.o||b.o };
+    if (!m.d && !m.u && !m.o) return null;
+    return m;
+  }
+  var tm = $("teammenu");
+  $("team").addEventListener("click", function(ev){
+    ev.stopPropagation();
+    tm.hidden = !tm.hidden;
+  });
+  document.addEventListener("click", function(ev){
+    if (!tm.hidden && !tm.contains(ev.target) && !ev.target.closest("#team")) tm.hidden = true;
+  });
+  $("texp").addEventListener("click", function(){
+    var data = collectMarks();
+    if (!Object.keys(data.wards).length){ toast("No marks on this device yet — open a ward and mark voters first"); return; }
+    var blob = new Blob([JSON.stringify(data)], { type:"application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "pamur-marks-" + new Date().toISOString().slice(0,10) + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+    var n = Object.keys(data.wards).length;
+    toast("Marks for " + n + " ward" + (n===1?"":"s") + " exported — send the file over WhatsApp");
+  });
+  $("timp").addEventListener("click", function(){ $("tfile").click(); });
+  $("tfile").addEventListener("change", function(ev){
+    var file = ev.target.files[0];
+    ev.target.value = "";
+    if (!file) return;
+    var rd = new FileReader();
+    rd.onload = function(){
+      var parsed;
+      try{ parsed = JSON.parse(rd.result); }catch(e){ toast("Could not read that file"); return; }
+      var wd = parsed && parsed.wards;
+      if (!wd || typeof wd !== "object"){ toast("Not a Pamur marks file"); return; }
+      var added = 0, mergedWards = 0;
+      for (var w in wd){
+        var wn = +w;
+        if (WARDS.indexOf(wn) === -1) continue;
+        var inc = wd[w], touched = false;
+        for (var ki = 0; ki < MARKKEYS.length; ki++){
+          var k = MARKKEYS[ki];
+          if (!inc[k] || !Object.keys(inc[k]).length) continue;
+          var cur = getLS(wn, k);
+          for (var key in inc[k]){
+            if (k === "flags"){
+              // flags are booleans: OR-merge is safe and local marks can never be undone
+              var mf = mergeFlag(cur[key], inc[k][key]);
+              if (mf && JSON.stringify(mf) !== JSON.stringify(cur[key] || {})){
+                cur[key] = mf; touched = true; added++;
+              }
+            } else if (inc[k][key] && !cur[key]){
+              cur[key] = inc[k][key]; touched = true; added++;
+            }
+          }
+          if (touched) localStorage.setItem("pamur"+wn+k, JSON.stringify(cur));
+        }
+        if (touched) mergedWards++;
+      }
+      // invalidate caches + refresh live views
+      phoneDirty = true;
+      refreshProgress();
+      pool.forEach(function(f){
+        if (f.dataset.loaded === "1" && f.contentWindow){ try{ f.contentWindow.location.reload(); }catch(e){} }
+      });
+      tm.hidden = true;
+      toast(added ? ("Merged " + added + " new marks from " + mergedWards + " ward" + (mergedWards===1?"":"s") + " — your marks were kept") : "Nothing new to merge — all marks already on this device");
+    };
+    rd.readAsText(file);
+  });
+  /* one-tap WhatsApp-ready progress report */
+  $("report").addEventListener("click", function(){
+    refreshProgress();   // always re-scan marks first — the 4s poll may be stale
+    var t = lastTotals;
+    if (!t){ toast("No progress data yet"); return; }
+    var top = t.wards.filter(function(x){ return x.marked > 0; })
+      .sort(function(a,b){ return b.marked - a.marked; }).slice(0, 6);
+    var lines = [
+      "📊 Pamur campaign progress (Wards 1–18)",
+      t.m + " of " + t.total.toLocaleString("en-IN") + " voters marked on this device",
+      "Dead " + t.d + " · Dup " + t.u + " · OOS " + t.o + " · Families " + t.f + " · Phones " + t.mb + " · Parties " + t.p
+    ];
+    if (top.length) lines.push("Active wards: " + top.map(function(x){ return "W" + x.w + " " + x.marked + "/" + x.total; }).join(" · "));
+    lines.push(location.origin + location.pathname + (curWard ? "?w=" + curWard : ""));
+    copyText(lines.join("\n"));
   });
   function applyDeepLink(){
     var q = new URLSearchParams(location.search);

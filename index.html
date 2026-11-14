@@ -44,6 +44,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 .frow .fdup{display:inline-block;margin-top:4px;font-size:10px;font-weight:800;color:#8a5a00;background:#fff3d6;border-radius:6px;padding:1px 6px}
 .frow .fcall{display:inline-block;margin-left:8px;font-size:11px;font-weight:800;color:var(--ac2);text-decoration:none}
 .frow .fsaved{display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:var(--mut)}
+.frow .fshared{display:inline-block;margin-left:6px;font-size:10px;font-weight:800;color:#1a7f52;background:#d8f0e6;border-radius:6px;padding:1px 6px}
 .frow.empty{color:var(--mut);font-size:12px;text-align:center;padding:12px;cursor:default}
 /* roll-up summary: total matches across wards + per-ward count chips */
 .fsum{border:1px solid var(--ac);background:#e6f4ee;border-radius:10px;padding:8px 10px}
@@ -209,6 +210,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   <button type="button" id="texp">⬇ Export my marks (JSON)</button>
   <button type="button" id="timp">⬆ Import marks from a file</button>
   <button type="button" id="timpmany">⬆ Import many (team lead)</button>
+  <button type="button" id="tphones">📇 Export shared phone book (team lead)</button>
 </div>
 <input type="file" id="tfile" accept=".json,application/json" style="display:none">
 <input type="file" id="tfilemany" accept=".json,application/json" multiple style="display:none">
@@ -218,7 +220,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   <div class="flabel">🔍 Find in all 18 wards</div>
   <div class="ftabs">
     <button type="button" class="ftab on" id="ftab0">Voter index</button>
-    <button type="button" class="ftab" id="ftab1">Phone · this device</button>
+    <button type="button" class="ftab" id="ftab1">Phone · team book</button>
   </div>
   <input id="fsearch" type="search" placeholder="Voter ID · House · Name · Serial" autocomplete="off" disabled>
   <div class="fres" id="fres"></div>
@@ -504,11 +506,42 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   var IDX = null;              // [{w,s,n,rn,h,e,_q(lower match key)}]
   var idxBySerial = {};        // "w_s" -> record (for phone-finder name lookups)
   var fsearch = $("fsearch"), fres = $("fres"), ftimer = null;
-  var fmode = 0;              // 0 = voter index, 1 = phone on this device
+  var fmode = 0;              // 0 = voter index, 1 = phone (this device + shared book)
   var phoneDirty = true, phoneList = [], phoneBySerial = {};
+  // Shared phone book: a committed JSON (pamur-phones.json) that a team lead
+  // exports + pushes, and every device downloads on load. Numbers live in one
+  // central place, so phones entered on ANY team member's phone are searchable
+  // by everyone — no backend, just a static file on GitHub Pages.
+  var sharedPhones = null, sharedLoaded = false, sharedErr = false;
+  function loadSharedPhones(){
+    if (sharedLoaded) return;
+    sharedLoaded = true;
+    // A local copy of the book (updated when a team lead merges + publishes on
+    // this phone) wins over the committed file, so fresh merges are searchable
+    // immediately without waiting for the GitHub Pages deploy.
+    var local = null;
+    try{
+      var raw = localStorage.getItem("pamurm_sharedbook");
+      if (raw){ var p = JSON.parse(raw); if (Array.isArray(p)) local = p; }
+    }catch(e){}
+    fetch("pamur-phones.json").then(function(r){
+      if (!r.ok) throw new Error("shared phone book not found (HTTP " + r.status + ")");
+      return r.json();
+    }).then(function(arr){
+      if (!Array.isArray(arr)) throw new Error("bad shared phone book");
+      if (local && local.length) sharedPhones = local;
+      else sharedPhones = arr;
+      buildPhone();
+      if (fsearch.value.trim().length >= 2) runSearch(fsearch.value);
+    }).catch(function(e){
+      sharedErr = true;
+      if (local && local.length) sharedPhones = local;
+      else sharedPhones = null;
+    });
+  }
   var NOTES = [
     "Search matches across every ward — tap a result to jump into that ward on that voter.<br>Phone numbers you've typed are kept on your device per ward, so they're not in this index.",
-    "Finds the mobile numbers already saved on THIS device, across all 18 wards. Numbers typed on another phone won't appear here.<br>Green ring: same number saved in more than one place — check for duplicates."
+    "Finds the mobile numbers in the team book: numbers saved on THIS device, plus the shared book a team lead published. Tap the <b>Team</b> button, “Export shared phone book”, then publish the file so every phone can search all team numbers.<br>Green ring: same number saved in more than one place — check for duplicates."
   ];
   function loadIndex(){
     if (IDX) { fsearch.disabled = false; return; }
@@ -531,7 +564,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     fmode = m;
     $("ftab0").classList.toggle("on", m === 0);
     $("ftab1").classList.toggle("on", m === 1);
-    fsearch.placeholder = (m === 0) ? "Voter ID · House · Name · Serial" : "Saved mobile number (4+ digits)";
+    fsearch.placeholder = (m === 0) ? "Voter ID · House · Name · Serial" : "Team mobile number (4+ digits)";
     $("fnote").innerHTML = NOTES[m];
     fres.classList.remove("show"); fres.innerHTML = "";
     if (fsearch.value.trim().length >= 2) runSearch(fsearch.value);
@@ -618,8 +651,9 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
       dupHtml = '<div><span class="fdup">⚠ Same number also on ' + esc(r.dup.join(" · ")) + "</span></div>";
     }
     var callHtml = (kind === "phone" && r.num) ? '<a class="fcall" href="tel:' + esc(r.num) + '">Call ▶</a>' : "";
+    var sharedTag = (kind === "phone" && r.src === "shared") ? '<span class="fshared">team book</span>' : "";
     var subMeta = (kind === "phone"
-      ? '<div class="fm">☎ ' + esc(r.num) + ' · #' + r.s + '</div>'
+      ? '<div class="fm">☎ ' + esc(r.num) + ' · #' + r.s + ' ' + sharedTag + '</div>'
       : '<div class="fm">House ' + esc(r.h) + ' · ' + esc(r.e) + ' · #' + r.s + '</div>');
     // voter rows: surface a phone already saved on this device, so the field team
     // can call without switching to the Phone tab first
@@ -642,13 +676,31 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   }
   function buildPhone(){
     phoneList = [];
+    // 1) this-device numbers (entered on this phone)
     for (var i = 0; i < WARDS.length; i++){
       var w = WARDS[i];
       var mm = getLS(w, "mob");
       for (var s in mm){
         var num = String(mm[s] || "");
         var dig = num.replace(/\D/g, "");
-        if (dig.length >= 6) phoneList.push({ w:w, s:+s, num:num, dig:dig });
+        if (dig.length >= 6) phoneList.push({ w:w, s:+s, num:num, dig:dig, src:"local" });
+      }
+    }
+    // 2) the shared book (any team member's number, committed centrally)
+    //    a voter already found locally keeps the local entry (fresh / editable)
+    var seen = {};
+    phoneList.forEach(function(r){ seen[r.w + "_" + r.s] = 1; });
+    if (sharedPhones && sharedPhones.length){
+      for (var j = 0; j < sharedPhones.length; j++){
+        var p = sharedPhones[j];
+        if (!p) continue;
+        var pw = +p.w, ps = +p.s, pnum = String(p.n || "");
+        var pdig = pnum.replace(/\D/g, "");
+        if (WARDS.indexOf(pw) === -1 || pdig.length < 6) continue;
+        var key = pw + "_" + ps;
+        if (seen[key]) continue;          // local copy already carries it
+        phoneList.push({ w:pw, s:ps, num:pnum, dig:pdig, src:"shared" });
+        seen[key] = 1;
       }
     }
     phoneBySerial = {};
@@ -675,7 +727,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
         other.push(x.w + "·#" + x.s);
       });
       return {
-        w:r.w, s:r.s, num:r.num,
+        w:r.w, s:r.s, num:r.num, src:r.src,
         n: rec ? rec.n : ("Voter #" + r.s),
         h: rec ? rec.h : "", e: rec ? rec.e : "",
         dup: other
@@ -688,7 +740,9 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     if (kind === "phone" && !count){
       var em2 = document.createElement("div"); em2.className = "frow empty";
       var first2 = rows[0] || {};
-      em2.textContent = "No saved number on this device matches “" + esc(first2.q||"") + "”.";
+      var msg = "No team number matches “" + esc(first2.q||"") + "”.";
+      if (sharedErr) msg += "<br>(Shared phone book not published yet — the team lead needs to export + publish it.)";
+      em2.innerHTML = msg;
       fres.appendChild(em2);
     }
     rows.forEach(function(r){
@@ -778,6 +832,47 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
     var n = Object.keys(data.wards).length;
     toast("Marks for " + n + " ward" + (n===1?"":"s") + " exported — send the file over WhatsApp");
+  });
+  /* team lead: build the shared phone book (this device's numbers + the book
+     already loaded, merged). The lead publishes the file so every phone can
+     search every team member's numbers from the central book. */
+  function sharedBookUnion(){
+    if (!sharedLoaded) loadSharedPhones();
+    // collect every phone on this device (all 18 wards' local books)
+    var byKey = {}, rows = [];
+    function add(w, s, num){
+      var dig = String(num || "").replace(/\D/g, "");
+      if (WARDS.indexOf(+w) === -1 || dig.length < 6) return;
+      var key = w + "_" + s;
+      if (byKey[key]) return;
+      byKey[key] = 1;
+      rows.push({ w:+w, s:+s, n:dig });
+    }
+    for (var i = 0; i < WARDS.length; i++){
+      var w = WARDS[i], mm = getLS(w, "mob");
+      for (var s in mm) add(w, s, mm[s]);
+    }
+    // fold in whatever is already in the central book (prior team members)
+    var base = sharedPhones || [];
+    for (var j = 0; j < base.length; j++){
+      var p = base[j];
+      if (p) add(p.w, p.s, p.n);
+    }
+    rows.sort(function(a, b){ return a.w - b.w || a.s - b.s; });
+    return rows;
+  }
+  $("tphones").addEventListener("click", function(){
+    var book = sharedBookUnion();
+    if (!book.length){ toast("No phone numbers yet — open a ward and add numbers first"); return; }
+    // keep it on this device so the app searches the freshest copy
+    try{ localStorage.setItem("pamurm_sharedbook", JSON.stringify(book)); }catch(e){}
+    var blob = new Blob([JSON.stringify(book, null, 0)], { type:"application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "pamur-phones.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+    toast(book.length + " numbers in the shared book — commit + publish this file so the whole team can search them");
   });
   $("timp").addEventListener("click", function(){ $("tfile").click(); });
   $("tfile").addEventListener("change", function(ev){
@@ -1011,6 +1106,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   function afterUnlock(){
     closeGate();
     loadIndex();
+    loadSharedPhones();
     refreshProgress();
     applyDeepLink();
     var last = null; try{ last = sessionStorage.getItem("pamurMasterLastWard"); }catch(e){}

@@ -782,7 +782,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   });
 
   /* ================= team collection: export / import / report ================= */
-  var MARKKEYS = ["flags","pty","fams","mob","oos"];
+  var MARKKEYS = ["flags","pty","fams","mob","oos","cst","lmk"];
   // master-level meta keys are written as "pamurm_targets"/"pamurm_notes" (underscore),
   // which is NOT what getLS("m",k) would build — so read them directly.
   function readMeta(key){ try{ var v = localStorage.getItem(key); if(!v) return {}; var o = JSON.parse(v); return (o && typeof o === "object") ? o : {}; }catch(e){ return {}; } }

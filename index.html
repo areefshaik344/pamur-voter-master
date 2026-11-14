@@ -38,6 +38,15 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 .frow .fdup{display:inline-block;margin-top:4px;font-size:10px;font-weight:800;color:#8a5a00;background:#fff3d6;border-radius:6px;padding:1px 6px}
 .frow .fcall{display:inline-block;margin-left:8px;font-size:11px;font-weight:800;color:var(--ac2);text-decoration:none}
 .frow.empty{color:var(--mut);font-size:12px;text-align:center;padding:12px;cursor:default}
+/* roll-up summary: total matches across wards + per-ward count chips */
+.fsum{border:1px solid var(--ac);background:#e6f4ee;border-radius:10px;padding:8px 10px}
+.fsum .fshead{font-size:12px;font-weight:800;color:var(--ac2)}
+.fsum .fwchips{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.fwchip{font:inherit;font-size:10.5px;font-weight:700;color:var(--ink);background:var(--bg);border:1px solid var(--bd);border-radius:999px;padding:3px 9px;cursor:pointer}
+.fwchip .n{font-weight:800;color:var(--ac2)}
+.fwchip.on{background:var(--ac);border-color:var(--ac2);color:#fff}
+.fwchip.on .n{color:#fff}
+.fmore{display:block;margin:2px auto 0;font:inherit;font-size:11.5px;font-weight:800;color:var(--ac);background:none;border:1px solid var(--ac);border-radius:8px;padding:5px 12px;cursor:pointer}
 .fnote{font-size:10px;color:var(--mut);margin-top:7px;line-height:1.45}
 
 /* ---------- campaign progress dashboard ---------- */
@@ -463,16 +472,91 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   function runSearch(val){
     if (fmode === 0) doFind(val); else doPhone(val);
   }
+  var findState = { q:"", all:[], byWard:{}, ward:null, showAll:false };
   function doFind(val){
     if (!IDX){ fres.classList.remove("show"); fres.innerHTML = ""; return; }
     var q = (val||"").trim().toLowerCase();
-    if (q.length < 2){ fres.classList.remove("show"); fres.innerHTML = ""; return; }
-    var res = [];
-    for (var i = 0; i < IDX.length; i++){
-      if (IDX[i]._q.indexOf(q) !== -1) res.push(IDX[i]);
-      if (res.length >= 40) break;
+    if (q.length < 2){
+      findState = { q:"", all:[], byWard:{}, ward:null, showAll:false };
+      fres.classList.remove("show"); fres.innerHTML = ""; return;
     }
-    renderFinder(res.length ? res : [{_empty:true, q:val.trim()}], res.length, "voter");
+    if (q !== findState.q) findState = { q:q, all:[], byWard:{}, ward:null, showAll:false };
+    if (!findState.all.length){
+      for (var i = 0; i < IDX.length; i++){
+        if (IDX[i]._q.indexOf(q) !== -1){
+          findState.all.push(IDX[i]);
+          var w = IDX[i].w;
+          findState.byWard[w] = (findState.byWard[w] || 0) + 1;
+        }
+      }
+    }
+    renderFindRollup();
+  }
+  function renderFindRollup(){
+    var st = findState;
+    fres.innerHTML = "";
+    if (!st.all.length){
+      var em = document.createElement("div"); em.className = "frow empty";
+      em.textContent = "No voter matches “" + esc(st.q||"") + "” in any ward.";
+      fres.appendChild(em); fres.classList.add("show"); return;
+    }
+    var total = st.all.length;
+    var wards = Object.keys(st.byWard).map(Number).sort(function(a,b){ return st.byWard[b]-st.byWard[a] || a-b; });
+    var sum = document.createElement("div"); sum.className = "fsum";
+    var head = document.createElement("div"); head.className = "fshead";
+    head.textContent = "“" + st.q + "” → " + total + " voter" + (total===1?"":"s") + " in " + wards.length + " ward" + (wards.length===1?"":"s");
+    sum.appendChild(head);
+    var chips = document.createElement("div"); chips.className = "fwchips";
+    function chip(label, sub, active, onClick){
+      var c = document.createElement("button"); c.type = "button";
+      c.className = "fwchip" + (active ? " on" : "");
+      c.innerHTML = label + ' <span class="n">' + sub + "</span>";
+      c.addEventListener("click", function(ev){ ev.stopPropagation(); onClick(); });
+      chips.appendChild(c);
+    }
+    chip("All", total, st.ward === null, function(){ st.ward = null; st.showAll = false; renderFindRollup(); });
+    wards.forEach(function(w){
+      chip("W" + w, st.byWard[w], st.ward === w, function(){
+        st.ward = (st.ward === w) ? null : w; st.showAll = false; renderFindRollup();
+      });
+    });
+    sum.appendChild(chips);
+    fres.appendChild(sum);
+    var rows = st.ward ? st.all.filter(function(r){ return r.w === st.ward; }) : st.all;
+    rows.slice(0, st.showAll ? rows.length : 40).forEach(function(r){ fres.appendChild(makeRow(r, "voter")); });
+    if (!st.showAll && rows.length > 40){
+      var more = document.createElement("button"); more.type = "button"; more.className = "fmore";
+      more.textContent = "Show all " + rows.length + (st.ward ? " in W" + st.ward : "");
+      more.addEventListener("click", function(){ st.showAll = true; renderFindRollup(); });
+      fres.appendChild(more);
+    } else if (st.showAll){
+      var less = document.createElement("button"); less.type = "button"; less.className = "fmore";
+      less.textContent = "Showing all " + rows.length + " — collapse";
+      less.addEventListener("click", function(){ st.showAll = false; renderFindRollup(); });
+      fres.appendChild(less);
+    }
+    fres.classList.add("show");
+  }
+  function makeRow(r, kind){
+    var d = document.createElement("div");
+    d.className = "frow";
+    var dupHtml = "";
+    if (kind === "phone" && r.dup && r.dup.length){
+      dupHtml = '<div><span class="fdup">⚠ Same number also on ' + esc(r.dup.join(" · ")) + "</span></div>";
+    }
+    var callHtml = (kind === "phone" && r.num) ? '<a class="fcall" href="tel:' + esc(r.num) + '">Call ▶</a>' : "";
+    d.innerHTML =
+      '<div><span class="fw">Ward ' + r.w + '</span><span class="fn">' + esc(r.n) + '</span> ' + callHtml + '</div>' +
+      (kind === "phone"
+        ? '<div class="fm">☎ ' + esc(r.num) + ' · #' + r.s + '</div>'
+        : '<div class="fm">House ' + esc(r.h) + ' · ' + esc(r.e) + ' · #' + r.s + '</div>') +
+      dupHtml +
+      '<div class="fjump">Open Ward ' + r.w + ' →</div>';
+    d.addEventListener("click", function(){
+      if (d.querySelector(".fcall") && event.target.classList.contains("fcall")) return;
+      jumpTo(r.w, r.s);
+    });
+    return d;
   }
   function buildPhone(){
     phoneList = [];
@@ -517,12 +601,6 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   }
   function renderFinder(rows, count, kind){
     fres.innerHTML = "";
-    if (kind === "voter" && !count){
-      var em = document.createElement("div"); em.className = "frow empty";
-      var first = rows[0] || {};
-      em.textContent = "No voter matches “" + esc(first.q||"") + "” in any ward.";
-      fres.appendChild(em);
-    }
     if (kind === "phone" && !count){
       var em2 = document.createElement("div"); em2.className = "frow empty";
       var first2 = rows[0] || {};
@@ -530,32 +608,9 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
       fres.appendChild(em2);
     }
     rows.forEach(function(r){
-      if (r._empty || r._phoneEmpty) return;
-      var d = document.createElement("div");
-      d.className = "frow";
-      var dupHtml = "";
-      if (kind === "phone" && r.dup && r.dup.length){
-        dupHtml = '<div><span class="fdup">⚠ Same number also on ' + esc(r.dup.join(" · ")) + "</span></div>";
-      }
-      var callHtml = (kind === "phone" && r.num) ? '<a class="fcall" href="tel:' + esc(r.num) + '">Call ▶</a>' : "";
-      d.innerHTML =
-        '<div><span class="fw">Ward ' + r.w + '</span><span class="fn">' + esc(r.n) + '</span> ' + callHtml + '</div>' +
-        (kind === "phone"
-          ? '<div class="fm">☎ ' + esc(r.num) + ' · #' + r.s + '</div>'
-          : '<div class="fm">House ' + esc(r.h) + ' · ' + esc(r.e) + ' · #' + r.s + '</div>') +
-        dupHtml +
-        '<div class="fjump">Open Ward ' + r.w + ' →</div>';
-      d.addEventListener("click", function(){
-        if (d.querySelector(".fcall") && event.target.classList.contains("fcall")) return;  // let the call link work
-        jumpTo(r.w, r.s);
-      });
-      fres.appendChild(d);
+      if (r._phoneEmpty) return;
+      fres.appendChild(makeRow(r, kind));
     });
-    if (kind === "voter" && count === 40){
-      var m2 = document.createElement("div"); m2.className = "frow empty";
-      m2.textContent = "Showing first 40 matches — refine the search to narrow.";
-      fres.appendChild(m2);
-    }
     fres.classList.add("show");
   }
   function jumpTo(w, s){

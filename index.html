@@ -80,6 +80,27 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 .drow.full .dbar i{background:#0d7a4a}
 .drow .dcnt{font-size:9.5px;color:var(--mut);flex:0 0 auto;font-variant-numeric:tabular-nums}
 .dnote{font-size:9.5px;color:var(--mut);margin-top:7px;line-height:1.4}
+/* ward targets + handover notes */
+.dbtn{font:inherit;font-size:10px;font-weight:700;color:var(--mut);background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:3px 7px;cursor:pointer}
+.dbtn .dbtn-t{display:inline}
+.drow .dbar{position:relative;overflow:visible}
+.drow .dbar .tick{position:absolute;top:-2px;left:0;width:2px;height:9px;background:#fff;border:1px solid var(--ac2);border-radius:2px;display:none}
+.drow.showtick .dbar .tick{display:block}
+.drow.hit .dbar i{background:#0d7a4a}
+.drow .nmark{font-size:9px;margin-left:2px;display:none}
+.drow.hasnote .nmark{display:inline}
+.dmenu{position:fixed;top:54px;right:10px;z-index:9990;width:272px;max-width:calc(100vw - 20px);max-height:70vh;overflow-y:auto;background:var(--card);border:1px solid var(--bd);border-radius:12px;box-shadow:0 12px 32px rgba(8,40,24,.3);padding:10px}
+.dmenu[hidden]{display:none}
+.dmenu .dmhead{font-size:12px;font-weight:800;color:var(--ac2);margin-bottom:8px}
+.dmenu .dmhead span{font-weight:400;color:var(--mut);font-size:10px}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.tcell{display:flex;align-items:center;gap:5px}
+.tcell label{font-size:10px;font-weight:800;color:var(--ink);flex:0 0 26px}
+.tcell input{width:100%;box-sizing:border-box;font:inherit;font-size:11px;padding:4px 6px;border:1px solid var(--bd);border-radius:7px;background:var(--bg);color:var(--fg)}
+.nsel{width:100%;box-sizing:border-box;font:inherit;font-size:12px;padding:7px 8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--fg);margin-bottom:6px}
+.ntext{width:100%;box-sizing:border-box;min-height:70px;resize:vertical;font:inherit;font-size:12px;padding:7px 8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--fg)}
+.dmenote{font-size:9.5px;color:var(--mut);margin-top:6px;line-height:1.4}
+.dmbtn{margin-top:8px;width:100%;font:inherit;font-size:12px;font-weight:800;color:#fff;background:var(--ac);border:none;border-radius:8px;padding:8px;cursor:pointer}
 
 /* ---------- ward picker ---------- */
 .picker{flex:0 0 auto;background:var(--card);border-bottom:1px solid var(--bd);padding:9px 12px}
@@ -187,8 +208,10 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 <div class="teammenu" id="teammenu" hidden>
   <button type="button" id="texp">⬇ Export my marks (JSON)</button>
   <button type="button" id="timp">⬆ Import marks from a file</button>
+  <button type="button" id="timpmany">⬆ Import many (team lead)</button>
 </div>
 <input type="file" id="tfile" accept=".json,application/json" style="display:none">
+<input type="file" id="tfilemany" accept=".json,application/json" multiple style="display:none">
 
 <!-- global finder: which ward does this voter belong to? -->
 <section class="finder">
@@ -211,6 +234,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     <span class="dsort">
       <button type="button" id="sortnum" class="on">Ward #</button>
       <button type="button" id="sortprog">Progress</button>
+      <button type="button" class="dbtn" id="targetbtn">Targets</button>
     </span>
   </div>
   <div class="dbig">
@@ -224,6 +248,17 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   <div class="dgrid" id="dgrid"></div>
   <div class="dnote">Live counts of the marks saved on this device (shared automatically with the ward apps). Tap a ward to open it.</div>
 </section>
+
+<!-- per-ward targets + handover notes sheet (shared via team export/import) -->
+<div class="dmenu" id="tmenu" hidden>
+  <div class="dmhead">Ward targets <span>· shown on the progress bars</span></div>
+  <div class="tgrid" id="tgrid"></div>
+  <div class="dmhead" style="margin-top:12px">Handover notes <span>· exported with the team JSON</span></div>
+  <select id="nward" class="nsel"></select>
+  <textarea id="ntext" class="ntext" placeholder="e.g. Covered till serial 500, gap 400–500, follow up Sunday…"></textarea>
+  <button type="button" id="nsave" class="dmbtn">Save notes + targets</button>
+  <div class="dmenote">Targets and notes are saved on this device, included in Team → Export, and merged on import — so a team lead can set per-ward goals for the whole team.</div>
+</div>
 
 <div class="picker">
   <div class="prow">
@@ -299,6 +334,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   /* ================= dashboard ================= */
   var chipBadges = {}, dashRows = {}, dashOrder = "num", dashSorted = null, lastTotals = null;
   function refreshProgress(){
+    syncMeta();   // read live targets/notes so an import or cross-tab write is always reflected
     var totM = 0, totD = 0, totU = 0, totO = 0, totF = 0, totMb = 0, totP = 0;
     dashSorted = WARDS.slice();
     if (dashOrder === "prog"){
@@ -314,12 +350,13 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
       dashSorted.forEach(function(w){
         var d = document.createElement("div");
         d.className = "drow"; d.dataset.w = w;
-        d.innerHTML = '<span class="dwn">W'+w+'</span><div class="dbar"><i style="width:0%"></i></div><span class="dcnt">0/'+COUNT[w]+'</span>';
+        d.innerHTML = '<span class="dwn">W'+w+'</span><div class="dbar"><i style="width:0%"></i><span class="tick"></span></div><span class="dcnt">0/'+COUNT[w]+'</span><i class="nmark" title="Handover note">📌</i>';
         d.addEventListener("click", function(){ pendingJump = null; select(w); });
         box.appendChild(d);
         dashRows[w] = d;
       });
     }
+    var totTgt = 0, totHit = 0;
     dashSorted.forEach(function(w){
       var m = wardMarks(w);
       totM += m.marked; totD += m.dead; totU += m.dup; totO += m.oos; totF += m.fams; totMb += m.mob; totP += m.pty;
@@ -332,6 +369,19 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
       row.querySelector(".dbar i").style.width = pct + "%";
       row.querySelector(".dcnt").textContent = m.marked + "/" + m.total;
       row.classList.toggle("full", m.marked === m.total);
+      // target tick (if one is set for this ward)
+      var t = targetOf(w), tick = row.querySelector(".tick");
+      if (t){
+        tick.style.left = Math.min(99, 100 * t / m.total).toFixed(1) + "%";
+        row.classList.add("showtick");
+        var hit = m.marked >= t;
+        row.classList.toggle("hit", hit);
+        totTgt++; if (hit) totHit++;
+      } else {
+        row.classList.remove("showtick","hit");
+      }
+      // handover note marker
+      row.classList.toggle("hasnote", !!(WN && WN[w] && String(WN[w]).trim()));
       row._m = m.marked;
       m._w = w;
     });
@@ -340,7 +390,9 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     $("pfill").style.width = pctAll + "%";
     $("dsum").textContent = totM + " of " + TOTAL_V.toLocaleString("en-IN");
     $("dcount").textContent = totM.toLocaleString("en-IN") + " of " + TOTAL_V.toLocaleString("en-IN") + " marked on this device";
-    $("dflags").textContent = "Dead " + totD + " · Dup " + totU + " · OOS " + totO + " · Families " + totF + " · Phones " + totMb + " · Parties " + totP;
+    var dflagStr = "Dead " + totD + " · Dup " + totU + " · OOS " + totO + " · Families " + totF + " · Phones " + totMb + " · Parties " + totP;
+    if (totTgt) dflagStr += "  ·  " + totHit + "/" + totTgt + " targets hit";
+    $("dflags").textContent = dflagStr;
     // keep a snapshot for the one-tap Report button (it renders after the grid)
     lastTotals = { m:totM, total:TOTAL_V, d:totD, u:totU, o:totO, f:totF, mb:totMb, p:totP,
       wards: dashSorted.map(function(w){ return { w:w, marked:(dashRows[w]&&dashRows[w]._m)||0, total:COUNT[w] }; }) };
@@ -677,7 +729,17 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 
   /* ================= team collection: export / import / report ================= */
   var MARKKEYS = ["flags","pty","fams","mob","oos"];
+  // master-level meta keys are written as "pamurm_targets"/"pamurm_notes" (underscore),
+  // which is NOT what getLS("m",k) would build — so read them directly.
+  function readMeta(key){ try{ var v = localStorage.getItem(key); if(!v) return {}; var o = JSON.parse(v); return (o && typeof o === "object") ? o : {}; }catch(e){ return {}; } }
+  var TARGETS = readMeta("pamurm_targets"), WN = readMeta("pamurm_notes");
+  // localStorage is the source of truth: re-read it before each use so an
+  // import / cross-tab ward app / team merge never leaves a stale snapshot.
+  function syncMeta(){ TARGETS = readMeta("pamurm_targets"); WN = readMeta("pamurm_notes"); }
+  function setMeta(){ localStorage.setItem("pamurm_targets", JSON.stringify(TARGETS)); localStorage.setItem("pamurm_notes", JSON.stringify(WN)); }
+  function targetOf(w){ if (!TARGETS) return null; var t = TARGETS[w]; return (t && t > 0 && t <= COUNT[w]) ? t : null; }
   function collectMarks(){
+    syncMeta();
     var out = { app:"pamur-voter-marks", v:1, at:new Date().toISOString(), wards:{} };
     for (var i = 0; i < WARDS.length; i++){
       var w = WARDS[i], bag = {};
@@ -687,6 +749,8 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
       }
       if (Object.keys(bag).length) out.wards[w] = bag;
     }
+    if (Object.keys(TARGETS).length) out.targets = TARGETS;
+    if (Object.keys(WN).length) out.notes = WN;
     return out;
   }
   function mergeFlag(a, b){
@@ -752,15 +816,166 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
       }
       // invalidate caches + refresh live views
       phoneDirty = true;
+      var metaC = {};
+      mergeMetaFrom(parsed, metaC);
       refreshProgress();
       pool.forEach(function(f){
         if (f.dataset.loaded === "1" && f.contentWindow){ try{ f.contentWindow.location.reload(); }catch(e){} }
       });
       tm.hidden = true;
-      toast(added ? ("Merged " + added + " new marks from " + mergedWards + " ward" + (mergedWards===1?"":"s") + " — your marks were kept") : "Nothing new to merge — all marks already on this device");
+      var metaN = metaC.metaAdded || 0;
+      var parts = [];
+      if (added) parts.push(added + " new marks");
+      if (metaN) parts.push(metaN + " target/note" + (metaN===1?"":"s"));
+      toast(parts.length ? ("Merged " + parts.join(" · ") + " — your marks were kept") : "Nothing new to merge — all marks already on this device");
     };
     rd.readAsText(file);
   });
+  /* team-lead union import: merge targets + notes from a marks file */
+  function mergeMetaFrom(parsed, counters){
+    counters = counters || {};
+    syncMeta();
+    var added = 0;
+    if (parsed && parsed.targets && typeof parsed.targets === "object"){
+      for (var w in parsed.targets){
+        var wn = +w; if (WARDS.indexOf(wn) === -1) continue;
+        var inc = parsed.targets[w];
+        if (!(inc > 0)) continue;
+        var nv = Math.max(TARGETS[wn] || 0, Math.min(inc, COUNT[wn]));
+        if (nv !== (TARGETS[wn] || 0)){ TARGETS[wn] = nv; added++; }
+      }
+    }
+    if (parsed && parsed.notes && typeof parsed.notes === "object"){
+      for (var n in parsed.notes){
+        var nn = +n; if (WARDS.indexOf(nn) === -1) continue;
+        var txt = String(parsed.notes[n] || "").trim();
+        if (txt && !(WN[nn] && String(WN[nn]).trim())){ WN[nn] = txt; added++; }
+      }
+    }
+    if (added) setMeta();
+    counters.metaAdded = (counters.metaAdded || 0) + added;
+    return counters;
+  }
+
+  /* team-lead multi-file import: union of many teammates' exports in one step */
+  $("timpmany").addEventListener("click", function(){ $("tfilemany").click(); });
+  $("tfilemany").addEventListener("change", function(ev){
+    var files = Array.prototype.slice.call(ev.target.files || []);
+    ev.target.value = "";
+    if (!files.length) return;
+    var combined = { wards:{}, targets:{}, notes:{} };
+    var done = 0, bad = 0;
+    files.forEach(function(file){
+      var rd = new FileReader();
+      rd.onload = function(){
+        var parsed;
+        try{ parsed = JSON.parse(rd.result); }catch(e){ bad++; if (++done === files.length) finish(); return; }
+        var wd = (parsed && parsed.wards && typeof parsed.wards === "object") ? parsed.wards : {};
+        for (var w in wd){
+          var wn = +w; if (WARDS.indexOf(wn) === -1) continue;
+          combined.wards[wn] = combined.wards[wn] || {};
+          for (var k in wd[w]){
+            var v = wd[w][k];
+            if (!combined.wards[wn][k]) combined.wards[wn][k] = JSON.parse(JSON.stringify(v || {}));
+            else for (var key in v){
+              if (k === "flags") combined.wards[wn][k][key] = mergeFlag(combined.wards[wn][k][key], v[key]);
+              else if (v[key] && !combined.wards[wn][k][key]) combined.wards[wn][k][key] = v[key];
+            }
+          }
+        }
+        if (parsed && parsed.targets) for (var t in parsed.targets){ var tw=+t; if (WARDS.indexOf(tw)>-1 && parsed.targets[t]>0) combined.targets[tw] = Math.max(combined.targets[tw]||0, Math.min(parsed.targets[t], COUNT[tw])); }
+        if (parsed && parsed.notes) for (var nb in parsed.notes){ var nbw=+nb; if (WARDS.indexOf(nbw)>-1 && String(parsed.notes[nb]||"").trim() && !combined.notes[nbw]) combined.notes[nbw] = String(parsed.notes[nb]).trim(); }
+        if (++done === files.length) finish();
+      };
+      rd.onerror = function(){ bad++; if (++done === files.length) finish(); };
+      rd.readAsText(file);
+    });
+    function finish(){
+      syncMeta();
+      var added = 0, mergedWards = 0;
+      for (var w in combined.wards){
+        var wn = +w, bag = combined.wards[wn], touched = false;
+        for (var ki = 0; ki < MARKKEYS.length; ki++){
+          var k = MARKKEYS[ki];
+          if (!bag[k] || !Object.keys(bag[k]).length) continue;
+          var cur = getLS(wn, k);
+          for (var key in bag[k]){
+            if (k === "flags"){
+              var mf = mergeFlag(cur[key], bag[k][key]);
+              if (mf && JSON.stringify(mf) !== JSON.stringify(cur[key] || {})){ cur[key] = mf; touched = true; added++; }
+            } else if (bag[k][key] && !cur[key]){ cur[key] = bag[k][key]; touched = true; added++; }
+          }
+          if (touched) localStorage.setItem("pamur"+wn+k, JSON.stringify(cur));
+        }
+        if (touched) mergedWards++;
+      }
+      // union targets/notes with local-wins
+      var madded = 0;
+      for (var tw in combined.targets){ if (WARDS.indexOf(+tw)>-1 && combined.targets[tw]>0){ var nv = Math.max(TARGETS[+tw]||0, Math.min(combined.targets[tw], COUNT[+tw])); if (nv!==(TARGETS[+tw]||0)){ TARGETS[+tw]=nv; madded++; } } }
+      for (var nn in combined.notes){ if (WARDS.indexOf(+nn)>-1 && combined.notes[nn] && !(WN[+nn]&&String(WN[+nn]).trim())){ WN[+nn]=String(combined.notes[nn]).trim(); madded++; } }
+      if (madded) setMeta();
+      phoneDirty = true;
+      refreshProgress();
+      pool.forEach(function(f){ if (f.dataset.loaded === "1" && f.contentWindow){ try{ f.contentWindow.location.reload(); }catch(e){} } });
+      tm.hidden = tmenu.hidden = true;
+      var msg = "Merged " + files.length + " file" + (files.length===1?"":"s") + " → " + added + " new marks · " + mergedWards + " ward" + (mergedWards===1?"":"s");
+      if (bad) msg += " (" + bad + " unreadable)";
+      toast(added ? msg : "Nothing new to merge — all marks already on this device");
+    }
+  });
+
+  /* per-ward targets + handover notes sheet */
+  function buildTargetsSheet(){
+    var tg = $("tgrid");
+    if (tg._built) return;
+    syncMeta();
+    tg.innerHTML = "";
+    for (var i = 0; i < WARDS.length; i++){
+      var w = WARDS[i];
+      var cell = document.createElement("div"); cell.className = "tcell";
+      var lab = document.createElement("label"); lab.textContent = "W" + w;
+      var inp = document.createElement("input"); inp.type = "number"; inp.min = "0"; inp.max = String(COUNT[w]);
+      inp.dataset.w = String(w); inp.placeholder = String(COUNT[w]); inp.title = "Target voters to mark (of " + COUNT[w] + ")";
+      inp.value = TARGETS[w] ? String(TARGETS[w]) : "";
+      cell.appendChild(lab); cell.appendChild(inp);
+      tg.appendChild(cell);
+    }
+    var sel = $("nward"); sel.innerHTML = "";
+    for (var j = 0; j < WARDS.length; j++){
+      var o = document.createElement("option"); o.value = String(WARDS[j]); o.textContent = "Ward " + WARDS[j];
+      sel.appendChild(o);
+    }
+    sel.value = (curWard && WARDS.indexOf(curWard) > -1) ? String(curWard) : "1";
+    $("ntext").value = WN[sel.value] || "";
+    sel.onchange = function(){ $("ntext").value = WN[this.value] || ""; };
+    tg._built = true;
+  }
+  var tmenu = $("tmenu");
+  $("targetbtn").addEventListener("click", function(ev){
+    ev.stopPropagation(); buildTargetsSheet();
+    tmenu.hidden = !tmenu.hidden;
+  });
+  document.addEventListener("click", function(ev){
+    if (!tmenu.hidden && !tmenu.contains(ev.target) && !ev.target.closest("#targetbtn")) tmenu.hidden = true;
+  });
+  $("nsave").addEventListener("click", function(){
+    syncMeta();
+    var changed = false, tg = $("tgrid");
+    var inps = tg.querySelectorAll("input");
+    for (var i = 0; i < inps.length; i++){
+      var inp = inps[i], w = +inp.dataset.w, v = parseInt(inp.value, 10);
+      if (v && v > 0 && v <= COUNT[w]){ if (TARGETS[w] !== v){ TARGETS[w] = v; changed = true; } }
+      else { if (TARGETS[w]){ delete TARGETS[w]; changed = true; } }
+    }
+    var nw = $("nward").value, ntext = $("ntext").value.trim();
+    if (ntext){ if (WN[nw] !== ntext){ WN[nw] = ntext; changed = true; } }
+    else { if (WN[nw]){ delete WN[nw]; changed = true; } }
+    if (changed) setMeta();
+    refreshProgress();
+    tmenu.hidden = true;
+    toast(changed ? "Targets + notes saved on this device" : "No changes to save");
+  });
+
   /* one-tap WhatsApp-ready progress report */
   $("report").addEventListener("click", function(){
     refreshProgress();   // always re-scan marks first — the 4s poll may be stale

@@ -15,10 +15,15 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 .logo{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;letter-spacing:.5px;flex:0 0 auto}
 .top h1{font-size:15px;margin:0;font-weight:800;line-height:1.15}
 .top .sub{font-size:11px;opacity:.92;margin-top:2px}
+.sharebtn{margin-left:auto;flex:0 0 auto;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;font:inherit;font-size:12px;font-weight:700;border-radius:9px;padding:7px 12px;cursor:pointer}
+.sharebtn:active{transform:scale(.96)}
 
 /* ---------- global finder (across all 18 wards) ---------- */
 .finder{flex:0 0 auto;background:var(--card);border-bottom:1px solid var(--bd);padding:10px 12px}
 .finder .flabel{font-size:11px;font-weight:800;color:var(--ac2);margin-bottom:6px}
+.ftabs{display:flex;gap:6px;margin-bottom:7px}
+.ftab{font:inherit;font-size:11px;font-weight:700;color:var(--mut);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:5px 10px;cursor:pointer}
+.ftab.on{background:#e6f4ee;border-color:var(--ac);color:var(--ac2)}
 .finder input{width:100%;border:1px solid var(--bd);border-radius:10px;padding:9px 11px;font:inherit;color:var(--fg);background:var(--bg);outline:none}
 .finder input:disabled{opacity:.55}
 .finder input:focus{border-color:var(--ac)}
@@ -30,31 +35,63 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 .frow .fn{font-size:13px;font-weight:700;color:var(--ink)}
 .frow .fm{font-size:11px;color:var(--mut);margin-top:2px}
 .frow .fjump{font-size:10px;color:var(--ac);font-weight:800;margin-top:3px}
+.frow .fdup{display:inline-block;margin-top:4px;font-size:10px;font-weight:800;color:#8a5a00;background:#fff3d6;border-radius:6px;padding:1px 6px}
+.frow .fcall{display:inline-block;margin-left:8px;font-size:11px;font-weight:800;color:var(--ac2);text-decoration:none}
 .frow.empty{color:var(--mut);font-size:12px;text-align:center;padding:12px;cursor:default}
 .fnote{font-size:10px;color:var(--mut);margin-top:7px;line-height:1.45}
+
+/* ---------- campaign progress dashboard ---------- */
+.dash{flex:0 0 auto;background:var(--card);border-bottom:1px solid var(--bd);padding:10px 12px}
+.dhead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.dhead .dtit{font-size:11px;font-weight:800;color:var(--ac2)}
+.dhead .dsum{font-size:11px;color:var(--mut)}
+.dsort{margin-left:auto;display:flex;gap:4px}
+.dsort button{font:inherit;font-size:10px;font-weight:700;color:var(--mut);background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:3px 7px;cursor:pointer}
+.dsort button.on{background:#e6f4ee;border-color:var(--ac);color:var(--ac2)}
+.dbig{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.dbig #dpct{font-size:22px;font-weight:800;color:var(--ac2);line-height:1;flex:0 0 auto}
+.dbig .dmeta{flex:1;min-width:0}
+.dbig .dcount{font-size:10.5px;color:var(--mut);margin-top:3px}
+.pbar{height:8px;background:#e4ece7;border-radius:5px;overflow:hidden}
+.pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:5px;transition:width .4s}
+.dflags{font-size:10.5px;color:var(--mut);margin-top:4px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px}
+.drow{display:flex;align-items:center;gap:6px;border:1px solid var(--bd);background:var(--bg);border-radius:8px;padding:5px 7px;cursor:pointer}
+.drow:active{background:#e9f2ed}
+.drow .dwn{font-size:11px;font-weight:800;color:var(--ink);flex:0 0 34px}
+.drow .dbar{flex:1;height:5px;background:#dde7e0;border-radius:3px;overflow:hidden}
+.drow .dbar i{display:block;height:100%;background:var(--ac)}
+.drow.full .dbar i{background:#0d7a4a}
+.drow .dcnt{font-size:9.5px;color:var(--mut);flex:0 0 auto;font-variant-numeric:tabular-nums}
+.dnote{font-size:9.5px;color:var(--mut);margin-top:7px;line-height:1.4}
 
 /* ---------- ward picker ---------- */
 .picker{flex:0 0 auto;background:var(--card);border-bottom:1px solid var(--bd);padding:9px 12px}
 .prow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
 .prow label{font-size:11px;font-weight:700;color:var(--mut);white-space:nowrap}
 #wsearch{flex:1;min-width:0;border:1px solid var(--bd);border-radius:9px;padding:7px 10px;font:inherit;color:var(--fg);background:var(--bg)}
-#chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+#chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
 #chips::-webkit-scrollbar{height:6px}
 #chips::-webkit-scrollbar-thumb{background:var(--bd);border-radius:4px}
-.chip{flex:0 0 auto;min-width:46px;border:1px solid var(--bd);background:var(--bg);border-radius:10px;padding:7px 9px;text-align:center;cursor:pointer;user-select:none;transition:background .12s,border-color .12s}
+.chip{position:relative;flex:0 0 auto;min-width:46px;border:1px solid var(--bd);background:var(--bg);border-radius:10px;padding:7px 9px;text-align:center;cursor:pointer;user-select:none;transition:background .12s,border-color .12s}
 .chip .n{font-size:16px;font-weight:800;color:var(--ink);line-height:1}
 .chip .c{font-size:9px;color:var(--mut);margin-top:3px}
 .chip.on{background:var(--ac);border-color:var(--ac2)}
 .chip.on .n{color:#fff}.chip.on .c{color:rgba(255,255,255,.85)}
+.chip .mb{position:absolute;top:-6px;right:-6px;background:#0d7a4a;color:#fff;font-size:9px;font-weight:800;border-radius:8px;padding:1px 5px;min-width:18px;display:none;box-shadow:0 2px 6px rgba(13,122,74,.4)}
 .total{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--ac2);background:#e6f4ee;border-radius:9px;padding:8px 10px;text-align:center;line-height:1.3}
 
 /* ---------- stage ---------- */
 .stage{flex:1 1 auto;min-height:0;position:relative;background:var(--bg)}
-#frame{width:100%;height:100%;border:0;display:block}
+.stage iframe{width:100%;height:100%;border:0;display:block}
 .hint{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--mut);padding:24px}
 .hint .ic{font-size:38px;margin-bottom:10px;opacity:.6}
 .hint p{font-size:13px;max-width:320px;margin:4px 0}
 .stage.busy .hint{display:none}
+
+/* ---------- share toast ---------- */
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:#0e2418;color:#fff;font-size:12px;font-weight:600;padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:2000;max-width:86%;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%)}
 
 /* ---------- gate (matches the standalone ward login screen) ---------- */
 #gate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(130% 100% at 50% 0%,#0f3d28 0%,#082818 55%,#041710 100%);padding:20px;overflow-y:auto}
@@ -86,8 +123,8 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 <div id="gate">
   <div class="gcard">
     <div class="glogo">YSRCP</div>
-    <h2>Pamur Voter App</h2>
-    <p>Wards 1–18 · 16,554 voters</p>
+    <h2>Voter App<br><span style="font-size:14px;font-weight:700;color:#0e2418">Pamur Wards 1–18</span></h2>
+    <p>16,554 voters · one dashboard</p>
     <div class="gin">
       <input type="password" id="mgpin" placeholder="Access password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" oninput="mgInput()" onkeydown="mgKey(event)" aria-label="Access password">
       <button type="button" id="mgshow" class="mgshow" onclick="mgToggle()" aria-label="Show password" title="Show password"><svg class="i-open" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><svg class="i-slash" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.9 9.9 0 0 1 12 4c7 0 11 8 11 8a18.45 18.45 0 0 1-2.16 2.94M14.08 9.91a3 3 0 1 1-4.24 4.24M1 1l22 22"></path></svg></button>
@@ -102,16 +139,43 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   <div class="logo">YSRCP</div>
   <div>
     <h1>Pamur Master Voter App</h1>
-    <div class="sub">Wards 1–18 · 16,554 voters · pick a ward</div>
+    <div class="sub" id="topsub">Wards 1–18 · 16,554 voters · pick a ward</div>
   </div>
+  <button class="sharebtn" id="share" type="button">Share</button>
 </header>
 
 <!-- global finder: which ward does this voter belong to? -->
 <section class="finder">
   <div class="flabel">🔍 Find in all 18 wards</div>
+  <div class="ftabs">
+    <button type="button" class="ftab on" id="ftab0">Voter index</button>
+    <button type="button" class="ftab" id="ftab1">Phone · this device</button>
+  </div>
   <input id="fsearch" type="search" placeholder="Voter ID · House · Name · Serial" autocomplete="off" disabled>
   <div class="fres" id="fres"></div>
-  <div class="fnote">Search matches across every ward — tap a result to jump into that ward on that voter.<br>Phone numbers you've typed are kept on your device per ward, so they're not in this index.</div>
+  <div class="fnote" id="fnote">Search matches across every ward — tap a result to jump into that ward on that voter.<br>Phone numbers you've typed are kept on your device per ward, so they're not in this index.</div>
+</section>
+
+<!-- campaign progress (live from the marks on this device) -->
+<section class="dash">
+  <div class="dhead">
+    <span class="dtit">📊 Campaign progress</span>
+    <span class="dsum" id="dsum">0 of 16,554</span>
+    <span class="dsort">
+      <button type="button" id="sortnum" class="on">Ward #</button>
+      <button type="button" id="sortprog">Progress</button>
+    </span>
+  </div>
+  <div class="dbig">
+    <div id="dpct">0%</div>
+    <div class="dmeta">
+      <div class="pbar"><i id="pfill" style="width:0%"></i></div>
+      <div class="dcount" id="dcount">0 marked on this device</div>
+      <div class="dflags" id="dflags"></div>
+    </div>
+  </div>
+  <div class="dgrid" id="dgrid"></div>
+  <div class="dnote">Live counts of the marks saved on this device (shared automatically with the ward apps). Tap a ward to open it.</div>
 </section>
 
 <div class="picker">
@@ -126,11 +190,12 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 <div class="stage" id="stage">
   <div class="hint" id="hint">
     <div class="ic">🗂️</div>
-    <p>Select a ward above, or use the global search to find a voter in any ward.</p>
+    <p>Select a ward below, or use the global search to find a voter in any ward.</p>
     <p>Search, family grouping, marks &amp; phone capture all work exactly as in the standalone ward apps. Each ward keeps its own saved data.</p>
   </div>
-  <iframe id="frame" title="ward app" style="display:none"></iframe>
 </div>
+
+<div id="toast"></div>
 
 <script>
 (function(){
@@ -139,24 +204,126 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   var MKEY = "pamurMasterUnlocked";
   var WARDS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
   var COUNT = {}; WARDS.forEach(function(w){ COUNT[w] = (w===18)?931:919; });
+  var TOTAL_V = WARDS.reduce(function(a,w){ return a+COUNT[w]; }, 0);
 
   function frameSrc(w){ return "../pamur-voter-w" + w + "/"; }
   function unlockWard(w){ try{ sessionStorage.setItem("pamur"+w+"unlocked","1"); }catch(e){} }
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function toast(msg){
+    var t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove("show"); }, 2600);
+  }
 
-  var frame = $("frame"), stage = $("stage"), hint = $("hint");
+  var stage = $("stage"), hint = $("hint");
   var pendingJump = null;   // serial to scroll to once the iframe ward finishes loading
+  var curWard = null;
 
-  // ---------- ward picker ----------
+  /* ================= marks layer (shared localStorage with ward apps) ================= */
+  function getLS(w, k){
+    try{
+      var v = localStorage.getItem("pamur"+w+k);
+      if (!v) return {};
+      var o = JSON.parse(v);
+      return (o && typeof o === "object") ? o : {};
+    }catch(e){ return {}; }
+  }
+  function wardMarks(w){
+    var flg = getLS(w, "flags"), pty = getLS(w, "pty"), fams = getLS(w, "fams"), mob = getLS(w, "mob"), oos = getLS(w, "oos");
+    var dead = 0, dup = 0, oosn = 0, famsN = 0, mobN = 0, ptyN = 0;
+    var seen = {}, marked = 0;
+    function mark(s){ if (seen[s]) return; seen[s] = 1; marked++; }
+    for (var s in pty){ if (pty[s]){ mark(s); ptyN++; } }
+    for (var f in fams){ if (fams[f]){ mark(f); famsN++; } }
+    for (var m in mob){ if (mob[m]){ mark(m); mobN++; } }
+    for (var o in oos){ if (oos[o]){ mark(o); oosn++; } }
+    for (var x in flg){
+      var fm = flg[x];
+      if (fm && (fm.d || fm.u || fm.o)){
+        mark(x);
+        if (fm.d) dead++;
+        if (fm.u) dup++;
+        if (fm.o) oosn++;
+      }
+    }
+    return { w:w, marked:marked, total:COUNT[w], dead:dead, dup:dup, oos:oosn, fams:famsN, mob:mobN, pty:ptyN, mobMap:mob };
+  }
+
+  /* ================= dashboard ================= */
+  var chipBadges = {}, dashRows = {}, dashOrder = "num", dashSorted = null;
+  function refreshProgress(){
+    var totM = 0, totD = 0, totU = 0, totO = 0, totF = 0, totMb = 0, totP = 0;
+    dashSorted = WARDS.slice();
+    if (dashOrder === "prog"){
+      dashSorted.sort(function(a,b){ return (dashRows[a]?dashRows[a]._m:0) < (dashRows[b]?dashRows[b]._m:0) ? 1 : -1; });
+    } else {
+      dashSorted.sort(function(a,b){ return a-b; });
+    }
+    // rebuild rows only when order changes; otherwise update in place
+    var box = $("dgrid"), changedOrder = !box._ord || box._ord !== JSON.stringify(dashSorted);
+    if (changedOrder){
+      box.innerHTML = "";
+      box._ord = JSON.stringify(dashSorted);
+      dashSorted.forEach(function(w){
+        var d = document.createElement("div");
+        d.className = "drow"; d.dataset.w = w;
+        d.innerHTML = '<span class="dwn">W'+w+'</span><div class="dbar"><i style="width:0%"></i></div><span class="dcnt">0/'+COUNT[w]+'</span>';
+        d.addEventListener("click", function(){ pendingJump = null; select(w); });
+        box.appendChild(d);
+        dashRows[w] = d;
+      });
+    }
+    dashSorted.forEach(function(w){
+      var m = wardMarks(w);
+      totM += m.marked; totD += m.dead; totU += m.dup; totO += m.oos; totF += m.fams; totMb += m.mob; totP += m.pty;
+      // chip badge
+      var b = chipBadges[w];
+      if (b){ if (m.marked > 0){ b.textContent = m.marked; b.style.display = ""; } else { b.style.display = "none"; } }
+      // dashboard row
+      var row = dashRows[w];
+      var pct = m.total ? Math.round(100 * m.marked / m.total) : 0;
+      row.querySelector(".dbar i").style.width = pct + "%";
+      row.querySelector(".dcnt").textContent = m.marked + "/" + m.total;
+      row.classList.toggle("full", m.marked === m.total);
+      row._m = m.marked;
+      m._w = w;
+    });
+    var pctAll = Math.round(100 * totM / TOTAL_V);
+    $("dpct").textContent = pctAll + "%";
+    $("pfill").style.width = pctAll + "%";
+    $("dsum").textContent = totM + " of " + TOTAL_V.toLocaleString("en-IN");
+    $("dcount").textContent = totM.toLocaleString("en-IN") + " of " + TOTAL_V.toLocaleString("en-IN") + " marked on this device";
+    $("dflags").textContent = "Dead " + totD + " · Dup " + totU + " · OOS " + totO + " · Families " + totF + " · Phones " + totMb + " · Parties " + totP;
+  }
+  $("sortnum").addEventListener("click", function(){
+    dashOrder = "num";
+    this.classList.add("on"); $("sortprog").classList.remove("on");
+    refreshProgress();
+  });
+  $("sortprog").addEventListener("click", function(){
+    dashOrder = "prog";
+    this.classList.add("on"); $("sortnum").classList.remove("on");
+    refreshProgress();
+  });
+  // live updates: storage events fire cross-document when a ward iframe writes marks
+  window.addEventListener("storage", function(e){
+    if (!e.key || e.key.indexOf("pamur") === 0){
+      phoneDirty = true;
+      refreshProgress();
+    }
+  });
+  setInterval(function(){ refreshProgress(); }, 4000);
+
+  /* ================= ward picker + iframe pool (fast switching) ================= */
   var chipEls = {};
+  var pool = [];           // live iframes, LRU (max 2) — re-visits are instant
   var chipsBox = $("chips");
   WARDS.forEach(function(w){
     var b = document.createElement("div");
     b.className = "chip"; b.dataset.w = w;
-    b.innerHTML = '<div class="n">'+w+'</div><div class="c">'+COUNT[w]+'</div>';
+    b.innerHTML = '<div class="n">'+w+'</div><div class="c">'+COUNT[w]+'</div><div class="mb"></div>';
     b.addEventListener("click", function(){ pendingJump = null; select(w); });
-    chipsBox.appendChild(b); chipEls[w] = b;
+    chipsBox.appendChild(b); chipEls[w] = b; chipBadges[w] = b.querySelector(".mb");
   });
   $("wsearch").addEventListener("input", function(){
     var q = this.value.trim();
@@ -165,17 +332,75 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     });
   });
 
+  function activeIframe(){
+    for (var i = 0; i < pool.length; i++){ if (pool[i].style.display !== "none") return pool[i]; }
+    return null;
+  }
   function select(w){
-    Object.keys(chipEls).forEach(function(k){ chipEls[k].classList.toggle("on", +k===w); });
+    curWard = w;
+    Object.keys(chipEls).forEach(function(k){ chipEls[k].classList.toggle("on", +k === w); });
     unlockWard(w);
     try{ sessionStorage.setItem("pamurMasterLastWard", String(w)); }catch(e){}
-    frame.style.display = "block"; frame.src = frameSrc(w);
-    stage.classList.add("busy"); hint.style.display="none";
+    $("topsub").textContent = "Ward " + w + " of 18 · " + COUNT[w] + " voters";
+    var f = null, idx = -1;
+    for (var i = 0; i < pool.length; i++){ if (+pool[i].dataset.w === w){ f = pool[i]; idx = i; break; } }
+    if (f){ pool.splice(idx, 1); pool.push(f); }        // LRU: bring to front
+    if (!f){
+      f = document.createElement("iframe");
+      f.className = "wframe"; f.dataset.w = w; f.title = "Pamur Ward " + w + " voter app"; f.style.display = "none";
+      f.addEventListener("load", onFrameLoad);
+      pool.push(f); stage.appendChild(f);
+      if (pool.length > 2){ var old = pool.shift(); old.src = "about:blank"; if (old.parentNode) old.parentNode.removeChild(old); }
+    }
+    pool.forEach(function(x){ x.style.display = (x === f) ? "block" : "none"; });
+    hint.style.display = "none"; stage.classList.add("busy");
+    var willLoadNow = false;
+    if (f.dataset.loaded !== "1"){ f.src = frameSrc(w); f.dataset.loaded = "1"; willLoadNow = true; }
+    if (!willLoadNow && pendingJump != null){
+      var s0 = pendingJump; pendingJump = null;
+      scheduleJump(f, s0);
+    }
+    // first load: pendingJump stays set; onFrameLoad() fires the jump once the ward is parsed
+    refreshProgress();
+  }
+  function onFrameLoad(ev){
+    var f = ev.target;
+    refreshProgress();
+    if (pendingJump != null && f === activeIframe()){
+      var s = pendingJump; pendingJump = null;
+      scheduleJump(f, s);
+    }
+  }
+  function scheduleJump(f, s){
+    setTimeout(function(){
+      try{
+        var wd = f.contentDocument;
+        var q = wd.getElementById("q");
+        if (q){ q.value = String(s); q.dispatchEvent(new Event("input",{bubbles:true})); }
+        setTimeout(function(){
+          try{
+            var card = f.contentDocument.querySelector('.mcard[data-s="'+s+'"]');
+            if (card){
+              card.scrollIntoView({block:"center"});
+              card.style.outline = "3px solid #12925a"; card.style.outlineOffset = "2px";
+              setTimeout(function(){ card.style.outline = ""; card.style.outlineOffset = ""; }, 1800);
+            }
+          }catch(e){}
+        }, 550);
+      }catch(e){}
+    }, 350);
   }
 
-  // ---------- global finder (cross-ward index) ----------
+  /* ================= global finder (cross-ward index + phone) ================= */
   var IDX = null;              // [{w,s,n,rn,h,e,_q(lower match key)}]
+  var idxBySerial = {};        // "w_s" -> record (for phone-finder name lookups)
   var fsearch = $("fsearch"), fres = $("fres"), ftimer = null;
+  var fmode = 0;              // 0 = voter index, 1 = phone on this device
+  var phoneDirty = true, phoneList = [];
+  var NOTES = [
+    "Search matches across every ward — tap a result to jump into that ward on that voter.<br>Phone numbers you've typed are kept on your device per ward, so they're not in this index.",
+    "Finds the mobile numbers already saved on THIS device, across all 18 wards. Numbers typed on another phone won't appear here.<br>Green ring: same number saved in more than one place — check for duplicates."
+  ];
   function loadIndex(){
     if (IDX) { fsearch.disabled = false; return; }
     fsearch.disabled = true;
@@ -185,101 +410,193 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
         rec._q = ((rec.n+" "+rec.rn+" "+rec.h+" "+rec.e+" "+rec.s).toLowerCase());
         return rec;
       });
+      IDX.forEach(function(rec){ idxBySerial[rec.w + "_" + rec.s] = rec; });
       fsearch.disabled = false;
-      if (fsearch.value.trim().length >= 2) doFind(fsearch.value);
+      if (fsearch.value.trim().length >= 2) runSearch(fsearch.value);
     }).catch(function(){
       fres.classList.add("show");
       fres.innerHTML = '<div class="frow empty">Could not load the search index.</div>';
     });
   }
+  function setFMode(m){
+    fmode = m;
+    $("ftab0").classList.toggle("on", m === 0);
+    $("ftab1").classList.toggle("on", m === 1);
+    fsearch.placeholder = (m === 0) ? "Voter ID · House · Name · Serial" : "Saved mobile number (4+ digits)";
+    $("fnote").innerHTML = NOTES[m];
+    fres.classList.remove("show"); fres.innerHTML = "";
+    if (fsearch.value.trim().length >= 2) runSearch(fsearch.value);
+  }
+  $("ftab0").addEventListener("click", function(){ setFMode(0); fsearch.focus(); });
+  $("ftab1").addEventListener("click", function(){ setFMode(1); fsearch.focus(); });
   fsearch.addEventListener("input", function(){
     clearTimeout(ftimer);
-    ftimer = setTimeout(function(){ doFind(fsearch.value); }, 150);
+    ftimer = setTimeout(function(){ runSearch(fsearch.value); }, 150);
   });
+  function runSearch(val){
+    if (fmode === 0) doFind(val); else doPhone(val);
+  }
   function doFind(val){
-    if (!IDX){ fres.classList.remove("show"); fres.innerHTML=""; return; }
+    if (!IDX){ fres.classList.remove("show"); fres.innerHTML = ""; return; }
     var q = (val||"").trim().toLowerCase();
-    if (q.length < 2){ fres.classList.remove("show"); fres.innerHTML=""; return; }
+    if (q.length < 2){ fres.classList.remove("show"); fres.innerHTML = ""; return; }
     var res = [];
-    for (var i=0;i<IDX.length;i++){
+    for (var i = 0; i < IDX.length; i++){
       if (IDX[i]._q.indexOf(q) !== -1) res.push(IDX[i]);
       if (res.length >= 40) break;
     }
-    fres.innerHTML = "";
-    if (!res.length){
-      var em = document.createElement("div"); em.className="frow empty";
-      em.textContent = "No voter matches “"+esc(val.trim())+"” in any ward.";
-      fres.appendChild(em);
-    } else {
-      res.forEach(function(r){
-        var d = document.createElement("div");
-        d.className = "frow";
-        d.innerHTML =
-          '<div><span class="fw">Ward '+r.w+'</span><span class="fn">'+esc(r.n)+'</span></div>'+
-          '<div class="fm">House '+esc(r.h)+' · '+esc(r.e)+' · #'+r.s+'</div>'+
-          '<div class="fjump">Open Ward '+r.w+' →</div>';
-        d.addEventListener("click", function(){ jumpTo(r.w, r.s); });
-        fres.appendChild(d);
-      });
-      if (res.length === 40){
-        var m = document.createElement("div"); m.className="frow empty";
-        m.textContent = "Showing first 40 matches — refine the search to narrow.";
-        fres.appendChild(m);
+    renderFinder(res.length ? res : [{_empty:true, q:val.trim()}], res.length, "voter");
+  }
+  function buildPhone(){
+    phoneList = [];
+    for (var i = 0; i < WARDS.length; i++){
+      var w = WARDS[i];
+      var mm = getLS(w, "mob");
+      for (var s in mm){
+        var num = String(mm[s] || "");
+        var dig = num.replace(/\D/g, "");
+        if (dig.length >= 6) phoneList.push({ w:w, s:+s, num:num, dig:dig });
       }
+    }
+    phoneDirty = false;
+  }
+  function doPhone(val){
+    if (phoneDirty) buildPhone();
+    var dq = String(val||"").replace(/\D/g, "");
+    if (dq.length < 4){ fres.classList.remove("show"); fres.innerHTML = ""; return; }
+    var hits = phoneList.filter(function(r){ return r.dig.indexOf(dq) !== -1; });
+    // duplicate detection: same 10-digit tail in more than one place
+    var byTail = {};
+    hits.forEach(function(r){
+      var t = r.dig.slice(-10);
+      (byTail[t] = byTail[t] || []).push(r);
+    });
+    var rows = hits.map(function(r){
+      var t = r.dig.slice(-10);
+      var rec = idxBySerial[r.w + "_" + r.s];
+      var other = [];
+      (byTail[t] || []).forEach(function(x){
+        if (x.w === r.w && x.s === r.s) return;
+        other.push(x.w + "·#" + x.s);
+      });
+      return {
+        w:r.w, s:r.s, num:r.num,
+        n: rec ? rec.n : ("Voter #" + r.s),
+        h: rec ? rec.h : "", e: rec ? rec.e : "",
+        dup: other
+      };
+    });
+    renderFinder(rows.length ? rows : [{_phoneEmpty:true, q:val.trim()}], rows.length, "phone");
+  }
+  function renderFinder(rows, count, kind){
+    fres.innerHTML = "";
+    if (kind === "voter" && !count){
+      var em = document.createElement("div"); em.className = "frow empty";
+      var first = rows[0] || {};
+      em.textContent = "No voter matches “" + esc(first.q||"") + "” in any ward.";
+      fres.appendChild(em);
+    }
+    if (kind === "phone" && !count){
+      var em2 = document.createElement("div"); em2.className = "frow empty";
+      var first2 = rows[0] || {};
+      em2.textContent = "No saved number on this device matches “" + esc(first2.q||"") + "”.";
+      fres.appendChild(em2);
+    }
+    rows.forEach(function(r){
+      if (r._empty || r._phoneEmpty) return;
+      var d = document.createElement("div");
+      d.className = "frow";
+      var dupHtml = "";
+      if (kind === "phone" && r.dup && r.dup.length){
+        dupHtml = '<div><span class="fdup">⚠ Same number also on ' + esc(r.dup.join(" · ")) + "</span></div>";
+      }
+      var callHtml = (kind === "phone" && r.num) ? '<a class="fcall" href="tel:' + esc(r.num) + '">Call ▶</a>' : "";
+      d.innerHTML =
+        '<div><span class="fw">Ward ' + r.w + '</span><span class="fn">' + esc(r.n) + '</span> ' + callHtml + '</div>' +
+        (kind === "phone"
+          ? '<div class="fm">☎ ' + esc(r.num) + ' · #' + r.s + '</div>'
+          : '<div class="fm">House ' + esc(r.h) + ' · ' + esc(r.e) + ' · #' + r.s + '</div>') +
+        dupHtml +
+        '<div class="fjump">Open Ward ' + r.w + ' →</div>';
+      d.addEventListener("click", function(){
+        if (d.querySelector(".fcall") && event.target.classList.contains("fcall")) return;  // let the call link work
+        jumpTo(r.w, r.s);
+      });
+      fres.appendChild(d);
+    });
+    if (kind === "voter" && count === 40){
+      var m2 = document.createElement("div"); m2.className = "frow empty";
+      m2.textContent = "Showing first 40 matches — refine the search to narrow.";
+      fres.appendChild(m2);
     }
     fres.classList.add("show");
   }
   function jumpTo(w, s){
     pendingJump = s;
-    fsearch.value = ""; doFind("");       // clear the finder, hand off to the ward
+    fsearch.value = ""; setFMode(0);   // clear the finder, hand off to the ward
     select(w);
   }
 
-  // ---------- drive the ward iframe to a specific voter ----------
-  frame.addEventListener("load", function(){
-    if (!pendingJump) return;
-    var s = pendingJump; pendingJump = null;
-    setTimeout(function(){
-      try{
-        var wd = frame.contentDocument;
-        var q = wd.getElementById("q");
-        if (q){ q.value = String(s); q.dispatchEvent(new Event("input",{bubbles:true})); }
-        setTimeout(function(){
-          try{
-            var card = frame.contentDocument.querySelector('.mcard[data-s="'+s+'"]');
-            if (card){
-              card.scrollIntoView({block:"center"});
-              card.style.outline = "3px solid #12925a"; card.style.outlineOffset = "2px";
-              setTimeout(function(){ card.style.outline = ""; card.style.outlineOffset=""; }, 1800);
-            }
-          }catch(e){}
-        }, 550);
-      }catch(e){}
-    }, 350);
+  /* ================= share (deep link) ================= */
+  function deepLinkURL(w, s){
+    var base = location.origin + location.pathname;
+    var u = base + "?w=" + w + (s ? "&s=" + s : "");
+    return u;
+  }
+  function copyText(txt){
+    function done(ok){ toast(ok ? "Link copied — open it on any phone" : "Could not copy — long-press to copy manually"); }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){ done(true); }, function(){ legacy(); });
+    } else legacy();
+    function legacy(){
+      var t = document.createElement("textarea");
+      t.value = txt; t.style.position = "fixed"; t.style.opacity = "0";
+      document.body.appendChild(t); t.select();
+      var ok = false; try{ ok = document.execCommand("copy"); }catch(e){}
+      t.remove(); done(ok);
+    }
+  }
+  $("share").addEventListener("click", function(){
+    var u = curWard ? deepLinkURL(curWard, null) : (location.origin + location.pathname);
+    copyText(u);
   });
+  function applyDeepLink(){
+    var q = new URLSearchParams(location.search);
+    var w = +q.get("w");
+    if (WARDS.indexOf(w) > -1){
+      var s = q.get("s");
+      pendingJump = s ? (+s) : null;
+      select(w);
+    }
+  }
 
-  // ---------- gate ----------
+  /* ================= gate ================= */
   var gateLast = "";
   function norm(s){ return (s||"").toLowerCase().replace(/[^a-z0-9]/g,""); }
-  function openGate(){ $("gate").style.display="flex"; }
-  function closeGate(){ $("gate").style.display="none"; }
+  function openGate(){ $("gate").style.display = "flex"; }
+  function closeGate(){ $("gate").style.display = "none"; }
   function showErr(on){ $("merr").classList.toggle("show", on); $("gate").classList.toggle("err", on); if(on){ $("gate").classList.remove("err"); setTimeout(function(){$("gate").classList.add("err");},10);} }
+  function afterUnlock(){
+    closeGate();
+    loadIndex();
+    refreshProgress();
+    applyDeepLink();
+    var last = null; try{ last = sessionStorage.getItem("pamurMasterLastWard"); }catch(e){}
+    if (pendingJump == null && WARDS.indexOf(+last) > -1 && !new URLSearchParams(location.search).get("w")) select(+last);
+  }
   function mgOpen(){
     var v = norm($("mgpin").value) || gateLast;
     if (v === PW){
       showErr(false);
       try{ sessionStorage.setItem(MKEY,"1"); }catch(e){}
-      closeGate();
-      loadIndex();
-      var last = null; try{ last = sessionStorage.getItem("pamurMasterLastWard"); }catch(e){}
-      if (last && WARDS.indexOf(+last) > -1) select(+last);
+      afterUnlock();
       return;
     }
     showErr(v.length > 0 || gateLast.length > 0);
   }
   function mgToggle(){
-    var p=$("mgpin"), b=$("mgshow"); if(!p||!b)return;
-    var showing = (p.type==="password");
+    var p = $("mgpin"), b = $("mgshow"); if (!p||!b) return;
+    var showing = (p.type === "password");
     p.type = showing ? "text" : "password";
     b.classList.toggle("on", showing);
     var lbl = showing ? "Hide password" : "Show password";
@@ -287,13 +604,11 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     try{ p.focus(); }catch(e){}
   }
   function mgInput(){ gateLast = norm($("mgpin").value); mgOpen(); }
-  function mgKey(ev){ if(ev && ev.key==="Enter"){ if(ev.preventDefault)ev.preventDefault(); mgOpen(); } }
+  function mgKey(ev){ if (ev && ev.key === "Enter"){ if (ev.preventDefault) ev.preventDefault(); mgOpen(); } }
 
   try{
-    if (sessionStorage.getItem(MKEY)==="1"){
-      closeGate(); loadIndex();
-      var last=null; try{ last=sessionStorage.getItem("pamurMasterLastWard"); }catch(e){}
-      if (last && WARDS.indexOf(+last)>-1) select(+last);
+    if (sessionStorage.getItem(MKEY) === "1"){
+      afterUnlock();
     } else {
       setTimeout(function(){ try{ $("mgpin").focus(); }catch(e){} }, 80);
     }

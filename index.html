@@ -16,6 +16,23 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 .top h1{font-size:15px;margin:0;font-weight:800;line-height:1.15}
 .top .sub{font-size:11px;opacity:.92;margin-top:2px}
 
+/* ---------- global finder (across all 18 wards) ---------- */
+.finder{flex:0 0 auto;background:var(--card);border-bottom:1px solid var(--bd);padding:10px 12px}
+.finder .flabel{font-size:11px;font-weight:800;color:var(--ac2);margin-bottom:6px}
+.finder input{width:100%;border:1px solid var(--bd);border-radius:10px;padding:9px 11px;font:inherit;color:var(--fg);background:var(--bg);outline:none}
+.finder input:disabled{opacity:.55}
+.finder input:focus{border-color:var(--ac)}
+.fres{display:none;flex-direction:column;gap:6px;max-height:38vh;overflow-y:auto;margin-top:8px;scrollbar-width:thin}
+.fres.show{display:flex}
+.frow{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;cursor:pointer;background:var(--bg)}
+.frow:active{background:#e9f2ed}
+.frow .fw{display:inline-block;background:var(--ac);color:#fff;font-weight:800;font-size:11px;border-radius:6px;padding:1px 6px;margin-right:6px}
+.frow .fn{font-size:13px;font-weight:700;color:var(--ink)}
+.frow .fm{font-size:11px;color:var(--mut);margin-top:2px}
+.frow .fjump{font-size:10px;color:var(--ac);font-weight:800;margin-top:3px}
+.frow.empty{color:var(--mut);font-size:12px;text-align:center;padding:12px;cursor:default}
+.fnote{font-size:10px;color:var(--mut);margin-top:7px;line-height:1.45}
+
 /* ---------- ward picker ---------- */
 .picker{flex:0 0 auto;background:var(--card);border-bottom:1px solid var(--bd);padding:9px 12px}
 .prow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
@@ -73,6 +90,14 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   </div>
 </header>
 
+<!-- global finder: which ward does this voter belong to? -->
+<section class="finder">
+  <div class="flabel">🔍 Find in all 18 wards</div>
+  <input id="fsearch" type="search" placeholder="Voter ID · House · Name · Serial" autocomplete="off" disabled>
+  <div class="fres" id="fres"></div>
+  <div class="fnote">Search matches across every ward — tap a result to jump into that ward on that voter.<br>Phone numbers you've typed are kept on your device per ward, so they're not in this index.</div>
+</section>
+
 <div class="picker">
   <div class="prow">
     <label for="wsearch">Ward</label>
@@ -85,8 +110,8 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 <div class="stage" id="stage">
   <div class="hint" id="hint">
     <div class="ic">🗂️</div>
-    <p>Select a ward above to open its full voter app.</p>
-    <p>Search, family grouping, marks & phone capture all work exactly as in the standalone ward apps. Each ward keeps its own saved data.</p>
+    <p>Select a ward above, or use the global search to find a voter in any ward.</p>
+    <p>Search, family grouping, marks &amp; phone capture all work exactly as in the standalone ward apps. Each ward keeps its own saved data.</p>
   </div>
   <iframe id="frame" title="ward app" style="display:none"></iframe>
 </div>
@@ -99,23 +124,22 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   var WARDS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
   var COUNT = {}; WARDS.forEach(function(w){ COUNT[w] = (w===18)?931:919; });
 
-  // each ward app lives at its own Pages path on the SAME host; the master
-  // lives at /pamur-voter-master/, so ../pamur-voter-w{W}/ is same-origin.
   function frameSrc(w){ return "../pamur-voter-w" + w + "/"; }
-  // ward apps auto-open when this flag is set in shared sessionStorage
   function unlockWard(w){ try{ sessionStorage.setItem("pamur"+w+"unlocked","1"); }catch(e){} }
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
-  var $ = function(id){ return document.getElementById(id); };
   var frame = $("frame"), stage = $("stage"), hint = $("hint");
+  var pendingJump = null;   // serial to scroll to once the iframe ward finishes loading
 
-  // ---- picker ----
+  // ---------- ward picker ----------
   var chipEls = {};
   var chipsBox = $("chips");
   WARDS.forEach(function(w){
     var b = document.createElement("div");
     b.className = "chip"; b.dataset.w = w;
     b.innerHTML = '<div class="n">'+w+'</div><div class="c">'+COUNT[w]+'</div>';
-    b.addEventListener("click", function(){ select(w); });
+    b.addEventListener("click", function(){ pendingJump = null; select(w); });
     chipsBox.appendChild(b); chipEls[w] = b;
   });
   $("wsearch").addEventListener("input", function(){
@@ -127,35 +151,118 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 
   function select(w){
     Object.keys(chipEls).forEach(function(k){ chipEls[k].classList.toggle("on", +k===w); });
-    unlockWard(w);                       // seed shared session so the iframe opens gate-free
+    unlockWard(w);
     try{ sessionStorage.setItem("pamurMasterLastWard", String(w)); }catch(e){}
     frame.style.display = "block"; frame.src = frameSrc(w);
     stage.classList.add("busy"); hint.style.display="none";
   }
 
-  // ---- gate ----
-  function gateShown(){ return $("gate").style.display !== "none"; }
+  // ---------- global finder (cross-ward index) ----------
+  var IDX = null;              // [{w,s,n,rn,h,e,_q(lower match key)}]
+  var fsearch = $("fsearch"), fres = $("fres"), ftimer = null;
+  function loadIndex(){
+    if (IDX) { fsearch.disabled = false; return; }
+    fsearch.disabled = true;
+    fetch("pamur-index.json").then(function(r){ return r.json(); }).then(function(arr){
+      IDX = arr.map(function(r){
+        var rec = { w:r[0], s:r[1], n:r[2]||"", rn:r[3]||"", h:r[4]||"", e:r[5]||"" };
+        rec._q = ((rec.n+" "+rec.rn+" "+rec.h+" "+rec.e+" "+rec.s).toLowerCase());
+        return rec;
+      });
+      fsearch.disabled = false;
+      if (fsearch.value.trim().length >= 2) doFind(fsearch.value);
+    }).catch(function(){
+      fres.classList.add("show");
+      fres.innerHTML = '<div class="frow empty">Could not load the search index.</div>';
+    });
+  }
+  fsearch.addEventListener("input", function(){
+    clearTimeout(ftimer);
+    ftimer = setTimeout(function(){ doFind(fsearch.value); }, 150);
+  });
+  function doFind(val){
+    if (!IDX){ fres.classList.remove("show"); fres.innerHTML=""; return; }
+    var q = (val||"").trim().toLowerCase();
+    if (q.length < 2){ fres.classList.remove("show"); fres.innerHTML=""; return; }
+    var res = [];
+    for (var i=0;i<IDX.length;i++){
+      if (IDX[i]._q.indexOf(q) !== -1) res.push(IDX[i]);
+      if (res.length >= 40) break;
+    }
+    fres.innerHTML = "";
+    if (!res.length){
+      var em = document.createElement("div"); em.className="frow empty";
+      em.textContent = "No voter matches “"+esc(val.trim())+"” in any ward.";
+      fres.appendChild(em);
+    } else {
+      res.forEach(function(r){
+        var d = document.createElement("div");
+        d.className = "frow";
+        d.innerHTML =
+          '<div><span class="fw">Ward '+r.w+'</span><span class="fn">'+esc(r.n)+'</span></div>'+
+          '<div class="fm">House '+esc(r.h)+' · '+esc(r.e)+' · #'+r.s+'</div>'+
+          '<div class="fjump">Open Ward '+r.w+' →</div>';
+        d.addEventListener("click", function(){ jumpTo(r.w, r.s); });
+        fres.appendChild(d);
+      });
+      if (res.length === 40){
+        var m = document.createElement("div"); m.className="frow empty";
+        m.textContent = "Showing first 40 matches — refine the search to narrow.";
+        fres.appendChild(m);
+      }
+    }
+    fres.classList.add("show");
+  }
+  function jumpTo(w, s){
+    pendingJump = s;
+    fsearch.value = ""; doFind("");       // clear the finder, hand off to the ward
+    select(w);
+  }
+
+  // ---------- drive the ward iframe to a specific voter ----------
+  frame.addEventListener("load", function(){
+    if (!pendingJump) return;
+    var s = pendingJump; pendingJump = null;
+    setTimeout(function(){
+      try{
+        var wd = frame.contentDocument;
+        var q = wd.getElementById("q");
+        if (q){ q.value = String(s); q.dispatchEvent(new Event("input",{bubbles:true})); }
+        setTimeout(function(){
+          try{
+            var card = frame.contentDocument.querySelector('.mcard[data-s="'+s+'"]');
+            if (card){
+              card.scrollIntoView({block:"center"});
+              card.style.outline = "3px solid #12925a"; card.style.outlineOffset = "2px";
+              setTimeout(function(){ card.style.outline = ""; card.style.outlineOffset=""; }, 1800);
+            }
+          }catch(e){}
+        }, 550);
+      }catch(e){}
+    }, 350);
+  });
+
+  // ---------- gate ----------
   function openGate(){ $("gate").style.display="flex"; }
   function closeGate(){ $("gate").style.display="none"; }
   function tryOpen(){
-    if (PW===""){ closeGate(); } else {
-      var v = $("mgpin").value;
-      if (v === PW){
-        try{ sessionStorage.setItem(MKEY,"1"); }catch(e){}
-        closeGate();
-        var last = null; try{ last = sessionStorage.getItem("pamurMasterLastWard"); }catch(e){}
-        if (last && WARDS.indexOf(+last) > -1) select(+last);
-      } else {
-        $("merr").textContent = "Wrong password. Try again.";
-        $("mgpin").focus();
-      }
+    if ($("mgpin").value === PW){
+      try{ sessionStorage.setItem(MKEY,"1"); }catch(e){}
+      closeGate();
+      loadIndex();
+      var last = null; try{ last = sessionStorage.getItem("pamurMasterLastWard"); }catch(e){}
+      if (last && WARDS.indexOf(+last) > -1) select(+last);
+    } else {
+      $("merr").textContent = "Wrong password. Try again.";
+      $("mgpin").focus();
     }
   }
   $("mgo").addEventListener("click", tryOpen);
   $("mgpin").addEventListener("keydown", function(e){ if (e.key==="Enter") tryOpen(); });
 
-  // already unlocked this tab session? (sessionStorage persists across refresh, not tab close)
-  try{ if (sessionStorage.getItem(MKEY)==="1") closeGate(); }catch(e){}
+  try{ if (sessionStorage.getItem(MKEY)==="1"){ closeGate(); loadIndex();
+      var last=null; try{ last=sessionStorage.getItem("pamurMasterLastWard"); }catch(e){}
+      if (last && WARDS.indexOf(+last)>-1) select(+last); } }catch(e){}
 })();
 </script>
 </body>

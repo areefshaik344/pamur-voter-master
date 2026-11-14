@@ -93,6 +93,25 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:#0e2418;color:#fff;font-size:12px;font-weight:600;padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:2000;max-width:86%;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%)}
 
+/* ---------- mobile: keep the ward view reachable ----------
+   On phones the 18-row dashboard + finder used to bury the ward picker and
+   iframe far down the page. Reorder the flex column so the finder sits on
+   top, the ward picker + live ward view follow immediately, and the big
+   progress grid drops to the bottom (collapsed by default, tap to expand). */
+.dexp{display:none}
+@media (max-width:720px){
+  .top{order:0}
+  .finder{order:1}
+  .picker{order:2}
+  .stage{order:3}
+  .dash{order:4}
+  .dash .dgrid{display:none}
+  .dash .dnote{display:none}
+  .dash.open .dgrid{display:grid}
+  .dash.open .dnote{display:block}
+  .dexp{display:inline-block;margin-left:8px;font:inherit;font-size:10px;font-weight:700;color:var(--ac2);background:#e6f4ee;border:1px solid var(--ac);border-radius:7px;padding:3px 7px;cursor:pointer}
+}
+
 /* ---------- gate (matches the standalone ward login screen) ---------- */
 #gate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(130% 100% at 50% 0%,#0f3d28 0%,#082818 55%,#041710 100%);padding:20px;overflow-y:auto}
 .gcard{background:#fff;border-radius:24px;max-width:350px;width:100%;padding:32px 28px 24px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:cardIn .35s ease both}
@@ -157,10 +176,11 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 </section>
 
 <!-- campaign progress (live from the marks on this device) -->
-<section class="dash">
+<section class="dash" id="dash">
   <div class="dhead">
     <span class="dtit">📊 Campaign progress</span>
     <span class="dsum" id="dsum">0 of 16,554</span>
+    <button type="button" class="dexp" id="dexp" aria-label="Expand campaign progress">▾ Progress</button>
     <span class="dsort">
       <button type="button" id="sortnum" class="on">Ward #</button>
       <button type="button" id="sortprog">Progress</button>
@@ -304,6 +324,13 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     dashOrder = "prog";
     this.classList.add("on"); $("sortnum").classList.remove("on");
     refreshProgress();
+  });
+  // mobile: dashboard is collapsed by default; this button expands it. Hidden on desktop.
+  $("dexp").addEventListener("click", function(){
+    var d = $("dash");
+    var open = d.classList.toggle("open");
+    this.textContent = (open ? "▴" : "▾") + " Progress";
+    this.setAttribute("aria-label", open ? "Collapse campaign progress" : "Expand campaign progress");
   });
   // live updates: storage events fire cross-document when a ward iframe writes marks
   window.addEventListener("storage", function(e){

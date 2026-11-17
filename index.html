@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>YCP · Pamur Master Voter App — Wards 1–18</title>
+<script id="freshr">if(!/[?&]v=/.test(location.search))location.replace(location.pathname+"?v="+Date.now()+location.hash)</script>
 <style>
 :root{--ac:#12925a;--ac2:#0a6b41;--card:#fff;--bg:#f3f6f4;--bd:#dfe6e1;--mut:#6b7a70;--fg:#182420;--ink:#0e2418}
 *{box-sizing:border-box}
@@ -290,7 +291,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   var COUNT = {}; WARDS.forEach(function(w){ COUNT[w] = (w===18)?931:919; });
   var TOTAL_V = WARDS.reduce(function(a,w){ return a+COUNT[w]; }, 0);
 
-  function frameSrc(w){ return "../pamur-voter-w" + w + "/"; }
+  function frameSrc(w){ return "../pamur-voter-w" + w + "/?v=" + Date.now(); }
   function unlockWard(w){ try{ sessionStorage.setItem("pamur"+w+"unlocked","1"); }catch(e){} }
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }

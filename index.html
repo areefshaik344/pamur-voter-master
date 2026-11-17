@@ -173,6 +173,48 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 @media (max-width:720px){.gcard{padding:26px 20px 20px;border-radius:18px}}
 @keyframes cardIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-8px)}}
+
+/* MASTER 5 IMPROVEMENTS STYLES */
+/* Segmented party progress bar */
+.dbar .pycp{display:inline-block;height:100%;background:#12925a;float:left}
+.dbar .ptdp{display:inline-block;height:100%;background:#f59e0b;float:left}
+.dbar .pjsp{display:inline-block;height:100%;background:#ef4444;float:left}
+.dbar .poth{display:inline-block;height:100%;background:#6366f1;float:left}
+
+/* Cross-ward duplicates card styles */
+.fdupcard{background:#fff;border:1px solid #e1e8e3;border-radius:12px;padding:12px;margin:8px 0;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.fduph{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px;font-weight:800}
+.fduptag{background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:6px}
+.fdupmatch{color:#065f46;background:#d1fae5;padding:2px 8px;border-radius:6px}
+.fdupbody{display:flex;flex-direction:column;gap:6px}
+.fdupro{display:flex;justify-content:space-between;align-items:center;background:#f9fafb;padding:8px 10px;border-radius:8px;font-size:12.5px;color:#1f2937}
+.fdupro .fw{background:#12925a;color:#fff;font-weight:800;font-size:11px;padding:2px 6px;border-radius:4px;margin-right:6px}
+.fjumpbtn{background:#fff;border:1px solid #12925a;color:#12925a;font-weight:700;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer}
+.fjumpbtn:active{background:#e6f4ee}
+
+/* Modals: CSV Export & WhatsApp Report */
+.mmodal-overlay{position:fixed;inset:0;background:rgba(14,36,26,.65);z-index:9995;display:flex;align-items:center;justify-content:center;padding:16px}
+.mmodal-card{background:#fff;border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.35);width:100%;max-width:540px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;padding:20px 18px;box-sizing:border-box}
+.mmodal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.mmodal-head b{font-size:16px;color:#0e2418}
+.mmodal-close{background:none;border:none;font-size:24px;color:#6b7280;cursor:pointer;line-height:1;padding:0 4px}
+.mmodal-sec{margin:10px 0;padding-bottom:10px;border-bottom:1px solid #f3f4f6}
+.mmodal-sectitle{font-size:12.5px;font-weight:700;color:#374151;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.msmallbtn{background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;color:#374151}
+.msmallbtn:active{background:#e5e7eb}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px}
+.wgrid label, .mcgrid label{display:flex;align-items:center;gap:5px;font-size:12px;color:#1f2937;cursor:pointer;background:#f9fafb;padding:5px 8px;border-radius:6px;border:1px solid #e5e7eb}
+.mcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+.mmodal-go{width:100%;height:44px;background:linear-gradient(135deg,#12925a,#0a6b41);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;margin-top:12px}
+.mmodal-go:active{filter:brightness(.92)}
+
+/* WhatsApp report modal textarea & buttons */
+.rep-textarea{width:100%;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;font-size:12.5px;line-height:1.5;padding:12px;border:1px solid #d1d5db;border-radius:10px;background:#f9fafb;color:#111827;resize:vertical;outline:none}
+.rep-actions{display:flex;gap:10px;margin-top:12px}
+.rep-btn-copy{flex:1;height:42px;border-radius:10px;border:1px solid #d1d5db;background:#fff;font-weight:700;font-size:13px;color:#1f2937;cursor:pointer}
+.rep-btn-wa{flex:1.2;height:42px;border-radius:10px;border:none;background:#25d366;font-weight:800;font-size:13px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.rep-btn-wa:active{background:#1ebc59}
+
 </style>
 </head>
 <body>
@@ -212,6 +254,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   <button type="button" id="timp">⬆ Import marks from a file</button>
   <button type="button" id="timpmany">⬆ Import many (team lead)</button>
   <button type="button" id="tphones">📇 Export shared phone book (team lead)</button>
+  <button type="button" id="tmcsv">📑 Export 18-ward CSV (custom columns)</button>
 </div>
 <input type="file" id="tfile" accept=".json,application/json" style="display:none">
 <input type="file" id="tfilemany" accept=".json,application/json" multiple style="display:none">
@@ -222,6 +265,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   <div class="ftabs">
     <button type="button" class="ftab on" id="ftab0">Voter index</button>
     <button type="button" class="ftab" id="ftab1">Phone · team book</button>
+    <button type="button" class="ftab" id="ftab2">Cross-ward duplicates</button>
   </div>
   <input id="fsearch" type="search" placeholder="Voter ID · House · Name · Serial" autocomplete="off" disabled>
   <div class="fres" id="fres"></div>
@@ -237,6 +281,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     <span class="dsort">
       <button type="button" id="sortnum" class="on">Ward #</button>
       <button type="button" id="sortprog">Progress</button>
+      <button type="button" id="sortparty">Party split</button>
       <button type="button" class="dbtn" id="targetbtn">Targets</button>
     </span>
   </div>
@@ -282,6 +327,53 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 
 <div id="toast"></div>
 
+<!-- Modal: Aggregated Multi-Ward CSV Export -->
+<div id="mcsvm" class="mmodal-overlay" style="display:none">
+  <div class="mmodal-card">
+    <div class="mmodal-head">
+      <b>Export All Wards CSV</b>
+      <button type="button" id="mcsvx" class="mmodal-close">×</button>
+    </div>
+    <div class="mmodal-sec">
+      <div class="mmodal-sectitle">
+        <span>Select Wards:</span>
+        <button type="button" id="wselall" class="msmallbtn">All</button>
+        <button type="button" id="wselnone" class="msmallbtn">None</button>
+        <span id="wselcnt" style="margin-left:auto;color:#6b7280;font-size:11px">18 of 18 selected</span>
+      </div>
+      <div id="wgrid" class="wgrid"></div>
+    </div>
+    <div class="mmodal-sec">
+      <div class="mmodal-sectitle">
+        <span>Choose Columns:</span>
+        <button type="button" id="cselall" class="msmallbtn">All</button>
+        <button type="button" id="cselnone" class="msmallbtn">None</button>
+        <button type="button" id="cselcontacts" class="msmallbtn">Contacts</button>
+        <span id="cselcnt" style="margin-left:auto;color:#6b7280;font-size:11px">16 of 16 selected</span>
+      </div>
+      <div id="mcgrid" class="mcgrid"></div>
+    </div>
+    <button type="button" id="mcsvgo" class="mmodal-go">Download Combined CSV (<span id="mcsvtotal">16,554</span> voters)</button>
+  </div>
+</div>
+
+<!-- Modal: Constituency WhatsApp Campaign Report -->
+<div id="repmodal" class="mmodal-overlay" style="display:none">
+  <div class="mmodal-card">
+    <div class="mmodal-head">
+      <b>📊 Constituency Campaign Report</b>
+      <button type="button" id="repx" class="mmodal-close">×</button>
+    </div>
+    <div style="font-size:12px;color:#5a6f64;margin-bottom:10px">Ready to send directly to WhatsApp groups and campaign leadership.</div>
+    <textarea id="reptxt" class="rep-textarea" rows="12" readonly></textarea>
+    <div class="rep-actions">
+      <button type="button" id="repcopy" class="rep-btn-copy">📋 Copy Message</button>
+      <button type="button" id="repwa" class="rep-btn-wa">📲 Send via WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+
 <script>
 (function(){
   "use strict";
@@ -314,11 +406,21 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     }catch(e){ return {}; }
   }
   function wardMarks(w){
-    var flg = getLS(w, "flags"), pty = getLS(w, "pty"), fams = getLS(w, "fams"), mob = getLS(w, "mob"), oos = getLS(w, "oos");
+    var flg = getLS(w, "flags"), pty = getLS(w, "pty"), fams = getLS(w, "fams"), mob = getLS(w, "mob"), oos = getLS(w, "oos"), cst = getLS(w, "cst"), lmk = getLS(w, "lmk");
     var dead = 0, dup = 0, oosn = 0, famsN = 0, mobN = 0, ptyN = 0;
+    var ycp = 0, tdp = 0, jsp = 0, oth = 0;
     var seen = {}, marked = 0;
     function mark(s){ if (seen[s]) return; seen[s] = 1; marked++; }
-    for (var s in pty){ if (pty[s]){ mark(s); ptyN++; } }
+    for (var s in pty){
+      var p = pty[s];
+      if (p){
+        mark(s); ptyN++;
+        if (p === "YCP") ycp++;
+        else if (p === "TDP") tdp++;
+        else if (p === "JSP") jsp++;
+        else oth++;
+      }
+    }
     for (var f in fams){ if (fams[f]){ mark(f); famsN++; } }
     for (var m in mob){ if (mob[m]){ mark(m); mobN++; } }
     for (var o in oos){ if (oos[o]){ mark(o); oosn++; } }
@@ -331,7 +433,8 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
         if (fm.o) oosn++;
       }
     }
-    return { w:w, marked:marked, total:COUNT[w], dead:dead, dup:dup, oos:oosn, fams:famsN, mob:mobN, pty:ptyN, mobMap:mob };
+    var und = Math.max(0, COUNT[w] - (ycp + tdp + jsp + oth + dead));
+    return { w:w, marked:marked, total:COUNT[w], dead:dead, dup:dup, oos:oosn, fams:famsN, mob:mobN, pty:ptyN, ycp:ycp, tdp:tdp, jsp:jsp, oth:oth, und:und, mobMap:mob };
   }
 
   /* ================= dashboard ================= */
@@ -339,9 +442,12 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   function refreshProgress(){
     syncMeta();   // read live targets/notes so an import or cross-tab write is always reflected
     var totM = 0, totD = 0, totU = 0, totO = 0, totF = 0, totMb = 0, totP = 0;
+    var totYCP = 0, totTDP = 0, totJSP = 0, totOth = 0;
     dashSorted = WARDS.slice();
     if (dashOrder === "prog"){
       dashSorted.sort(function(a,b){ return (dashRows[a]?dashRows[a]._m:0) < (dashRows[b]?dashRows[b]._m:0) ? 1 : -1; });
+    } else if (dashOrder === "party"){
+      dashSorted.sort(function(a,b){ return ((dashRows[a]&&dashRows[a]._y)||0) < ((dashRows[b]&&dashRows[b]._y)||0) ? 1 : -1; });
     } else {
       dashSorted.sort(function(a,b){ return a-b; });
     }
@@ -368,9 +474,21 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
       if (b){ if (m.marked > 0){ b.textContent = m.marked; b.style.display = ""; } else { b.style.display = "none"; } }
       // dashboard row
       var row = dashRows[w];
-      var pct = m.total ? Math.round(100 * m.marked / m.total) : 0;
-      row.querySelector(".dbar i").style.width = pct + "%";
-      row.querySelector(".dcnt").textContent = m.marked + "/" + m.total;
+      totYCP += m.ycp; totTDP += m.tdp; totJSP += m.jsp; totOth += m.oth;
+      row._y = m.ycp;
+      var dbar = row.querySelector(".dbar");
+      if (dashOrder === "party"){
+        var py = m.total ? (100 * m.ycp / m.total).toFixed(1) : 0;
+        var pt = m.total ? (100 * m.tdp / m.total).toFixed(1) : 0;
+        var pj = m.total ? (100 * m.jsp / m.total).toFixed(1) : 0;
+        var po = m.total ? (100 * m.oth / m.total).toFixed(1) : 0;
+        dbar.innerHTML = '<span class="pycp" style="width:'+py+'%"></span><span class="ptdp" style="width:'+pt+'%"></span><span class="pjsp" style="width:'+pj+'%"></span><span class="poth" style="width:'+po+'%"></span><span class="tick"></span>';
+        row.querySelector(".dcnt").innerHTML = '<b style="color:#12925a">Y:'+m.ycp+'</b> <b style="color:#d97706">T:'+m.tdp+'</b> <b style="color:#dc2626">J:'+m.jsp+'</b>';
+      } else {
+        var pct = m.total ? Math.round(100 * m.marked / m.total) : 0;
+        dbar.innerHTML = '<i style="width:'+pct+'%"></i><span class="tick"></span>';
+        row.querySelector(".dcnt").textContent = m.marked + "/" + m.total;
+      }
       row.classList.toggle("full", m.marked === m.total);
       // target tick (if one is set for this ward)
       var t = targetOf(w), tick = row.querySelector(".tick");
@@ -393,12 +511,21 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     $("pfill").style.width = pctAll + "%";
     $("dsum").textContent = totM + " of " + TOTAL_V.toLocaleString("en-IN");
     $("dcount").textContent = totM.toLocaleString("en-IN") + " of " + TOTAL_V.toLocaleString("en-IN") + " marked on this device";
-    var dflagStr = "Dead " + totD + " · Dup " + totU + " · OOS " + totO + " · Families " + totF + " · Phones " + totMb + " · Parties " + totP;
+    var dflagStr;
+    if (dashOrder === "party"){
+      dflagStr = "🟢 YCP " + totYCP + " · 🟡 TDP " + totTDP + " · 🔴 JSP " + totJSP + " · Others " + totOth + " · Undecided " + (TOTAL_V - totYCP - totTDP - totJSP - totOth - totD);
+    } else {
+      dflagStr = "Dead " + totD + " · Dup " + totU + " · OOS " + totO + " · Families " + totF + " · Phones " + totMb + " · Parties " + totP;
+    }
     if (totTgt) dflagStr += "  ·  " + totHit + "/" + totTgt + " targets hit";
     $("dflags").textContent = dflagStr;
     // keep a snapshot for the one-tap Report button (it renders after the grid)
-    lastTotals = { m:totM, total:TOTAL_V, d:totD, u:totU, o:totO, f:totF, mb:totMb, p:totP,
-      wards: dashSorted.map(function(w){ return { w:w, marked:(dashRows[w]&&dashRows[w]._m)||0, total:COUNT[w] }; }) };
+    lastTotals = { m:totM, total:TOTAL_V, d:totD, u:totU, o:totO, f:totF, mb:totMb, p:totP, ycp:totYCP, tdp:totTDP, jsp:totJSP, oth:totOth,
+      wards: dashSorted.map(function(w){
+        var wm = wardMarks(w);
+        return { w:w, marked:(dashRows[w]&&dashRows[w]._m)||0, total:COUNT[w], ycp:wm.ycp, tdp:wm.tdp, jsp:wm.jsp, oth:wm.oth, und:wm.und, dead:wm.dead, oos:wm.oos, mob:wm.mob };
+      })
+    };
   }
   $("sortnum").addEventListener("click", function(){
     dashOrder = "num";
@@ -407,7 +534,12 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   });
   $("sortprog").addEventListener("click", function(){
     dashOrder = "prog";
-    this.classList.add("on"); $("sortnum").classList.remove("on");
+    this.classList.add("on"); $("sortnum").classList.remove("on"); $("sortparty").classList.remove("on");
+    refreshProgress();
+  });
+  $("sortparty").addEventListener("click", function(){
+    dashOrder = "party";
+    this.classList.add("on"); $("sortnum").classList.remove("on"); $("sortprog").classList.remove("on");
     refreshProgress();
   });
   // mobile: dashboard is collapsed by default; this button expands it. Hidden on desktop.
@@ -420,6 +552,13 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   // live updates: storage events fire cross-document when a ward iframe writes marks
   window.addEventListener("storage", function(e){
     if (!e.key || e.key.indexOf("pamur") === 0){
+      phoneDirty = true;
+      refreshProgress();
+    }
+  });
+  // Live 0ms postMessage synchronization from embedded ward iframes
+  window.addEventListener("message", function(ev){
+    if (ev && ev.data && ev.data.type === "PAMUR_MARK_CHANGE"){
       phoneDirty = true;
       refreshProgress();
     }
@@ -542,6 +681,11 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   }
   var NOTES = [
     "Search matches across every ward — tap a result to jump into that ward on that voter.<br>Phone numbers you've typed are kept on your device per ward, so they're not in this index.",
+    "Finds the mobile numbers in the team book: numbers saved on THIS device, plus the shared book a team lead published. Tap the <b>Team</b> button, “Export shared phone book”, then publish the file so every phone can search all team numbers.<br>Green ring: same number saved in more than one place — check for duplicates.",
+    "Cross-ward duplicate voter detection across all 18 booths: identifies potential double-registrations sharing identical Voter IDs or matching Name and Relative Name across different wards."
+  ];
+  var DUMMY_NOTES_OLD = [
+    "Search matches across every ward — tap a result to jump into that ward on that voter.<br>Phone numbers you've typed are kept on your device per ward, so they're not in this index.",
     "Finds the mobile numbers in the team book: numbers saved on THIS device, plus the shared book a team lead published. Tap the <b>Team</b> button, “Export shared phone book”, then publish the file so every phone can search all team numbers.<br>Green ring: same number saved in more than one place — check for duplicates."
   ];
   function loadIndex(){
@@ -565,11 +709,20 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     fmode = m;
     $("ftab0").classList.toggle("on", m === 0);
     $("ftab1").classList.toggle("on", m === 1);
-    fsearch.placeholder = (m === 0) ? "Voter ID · House · Name · Serial" : "Team mobile number (4+ digits)";
-    $("fnote").innerHTML = NOTES[m];
-    fres.classList.remove("show"); fres.innerHTML = "";
-    if (fsearch.value.trim().length >= 2) runSearch(fsearch.value);
+    $("ftab2").classList.toggle("on", m === 2);
+    if (m === 2){
+      fsearch.style.display = "none";
+      $("fnote").innerHTML = NOTES[2];
+      renderCrossWardDuplicates();
+    } else {
+      fsearch.style.display = "";
+      fsearch.placeholder = (m === 0) ? "Voter ID · House · Name · Serial" : "Team mobile number (4+ digits)";
+      $("fnote").innerHTML = NOTES[m];
+      fres.classList.remove("show"); fres.innerHTML = "";
+      if (fsearch.value.trim().length >= 2) runSearch(fsearch.value);
+    }
   }
+  $("ftab2").addEventListener("click", function(){ setFMode(2); });
   $("ftab0").addEventListener("click", function(){ setFMode(0); fsearch.focus(); });
   $("ftab1").addEventListener("click", function(){ setFMode(1); fsearch.focus(); });
   fsearch.addEventListener("input", function(){
@@ -1144,6 +1297,296 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   }catch(e){}
   // expose handlers referenced from the inline HTML attributes
   window.mgToggle = mgToggle; window.mgInput = mgInput; window.mgKey = mgKey; window.mgOpen = mgOpen;
+
+  /* MASTER 5 IMPROVEMENTS JS ENGINE */
+
+  /* ================= 1. CROSS-WARD DUPLICATES ENGINE ================= */
+  var dupFilter = "all";
+  function scanCrossWardDuplicates(){
+    if (!IDX) return { byName:[], byEpic:[] };
+    var byNameMap = {}, byEpicMap = {};
+    for (var i = 0; i < IDX.length; i++){
+      var r = IDX[i];
+      // Name + Relative deduplication (minimum 3 chars)
+      var nm = (r.n||"").trim().replace(/\s+/g, " ");
+      var rm = (r.rn||"").trim().replace(/\s+/g, " ");
+      if (nm.length >= 3 && rm.length >= 3){
+        var nkey = nm + " | " + rm;
+        (byNameMap[nkey] = byNameMap[nkey] || []).push(r);
+      }
+      // EPIC deduplication (minimum 6 chars)
+      var epic = (r.e||"").trim().toUpperCase();
+      if (epic.length >= 6){
+        (byEpicMap[epic] = byEpicMap[epic] || []).push(r);
+      }
+    }
+    // Filter to groups that span MULTIPLE wards
+    var nameGroups = [], epicGroups = [];
+    for (var k in byNameMap){
+      var grp = byNameMap[k];
+      var wset = {}; grp.forEach(function(x){ wset[x.w] = 1; });
+      if (Object.keys(wset).length > 1) nameGroups.push({ key:k, type:"name", list:grp });
+    }
+    for (var ek in byEpicMap){
+      var egrp = byEpicMap[ek];
+      var ewset = {}; egrp.forEach(function(x){ ewset[x.w] = 1; });
+      if (Object.keys(ewset).length > 1) epicGroups.push({ key:ek, type:"epic", list:egrp });
+    }
+    return { byName:nameGroups, byEpic:epicGroups };
+  }
+
+  function renderCrossWardDuplicates(){
+    if (!IDX){
+      fres.classList.add("show");
+      fres.innerHTML = '<div class="frow empty">Loading voter index for duplicate scan...</div>';
+      loadIndex();
+      return;
+    }
+    var dups = scanCrossWardDuplicates();
+    var all = [];
+    if (dupFilter === "all" || dupFilter === "name") all = all.concat(dups.byName);
+    if (dupFilter === "all" || dupFilter === "epic") all = all.concat(dups.byEpic);
+
+    fres.innerHTML = "";
+    var sum = document.createElement("div"); sum.className = "fsum";
+    var head = document.createElement("div"); head.className = "fshead";
+    head.innerHTML = "<b>⚠ Cross-Ward Duplicates</b> → " + all.length + " groups found across Pamur";
+    sum.appendChild(head);
+
+    var chips = document.createElement("div"); chips.className = "fwchips";
+    function addDChip(label, count, active, onClick){
+      var c = document.createElement("button"); c.type = "button";
+      c.className = "fwchip" + (active ? " on" : "");
+      c.innerHTML = label + ' <span class="n">' + count + "</span>";
+      c.addEventListener("click", function(ev){ ev.stopPropagation(); onClick(); });
+      chips.appendChild(c);
+    }
+    addDChip("All Duplicates", dups.byName.length + dups.byEpic.length, dupFilter === "all", function(){
+      dupFilter = "all"; renderCrossWardDuplicates();
+    });
+    addDChip("Name + Relative", dups.byName.length, dupFilter === "name", function(){
+      dupFilter = "name"; renderCrossWardDuplicates();
+    });
+    addDChip("Voter ID (EPIC)", dups.byEpic.length, dupFilter === "epic", function(){
+      dupFilter = "epic"; renderCrossWardDuplicates();
+    });
+    sum.appendChild(chips);
+    fres.appendChild(sum);
+
+    if (!all.length){
+      var em = document.createElement("div"); em.className = "frow empty";
+      em.textContent = "No cross-ward duplicates found for selected filter.";
+      fres.appendChild(em);
+    } else {
+      all.forEach(function(g){
+        var card = document.createElement("div"); card.className = "fdupcard";
+        var isEpic = g.type === "epic";
+        card.innerHTML = '<div class="fduph"><span class="fduptag">' + (isEpic ? "Same Voter ID" : "Matching Name & Relative") + '</span><span class="fdupmatch">' + esc(g.key) + '</span></div>';
+        var b = document.createElement("div"); b.className = "fdupbody";
+        g.list.forEach(function(v){
+          var row = document.createElement("div"); row.className = "fdupro";
+          row.innerHTML = '<div><span class="fw">W' + v.w + '</span> <b>#' + v.s + '</b> · Door ' + esc(v.h) + ' · ' + esc(v.e) + ' · ' + esc(v.n) + ' (s/o ' + esc(v.rn) + ')</div>';
+          var jbtn = document.createElement("button"); jbtn.type = "button"; jbtn.className = "fjumpbtn";
+          jbtn.textContent = "Open W" + v.w + " →";
+          jbtn.addEventListener("click", function(ev){ ev.stopPropagation(); jumpTo(v.w, v.s); });
+          row.appendChild(jbtn);
+          b.appendChild(row);
+        });
+        card.appendChild(b);
+        fres.appendChild(card);
+      });
+    }
+    fres.classList.add("show");
+  }
+
+  /* ================= 2. AGGREGATED MULTI-WARD CSV EXPORT ================= */
+  var MCOLS = [
+    ["s","SNo"],["w","Ward"],["n","Name"],["rt","RelationType"],["rn","Relative"],
+    ["a","Age"],["g","Gender"],["h","House"],["e","VoterID"],
+    ["fam","Family"],["pty","Party"],["cst","Caste"],["flg","Flags"],
+    ["tch","Teacher"],["oos","OOSPlace"],["mob","Mobile"],["lmk","HouseLandmark"]
+  ];
+
+  function initMasterCSVModal(){
+    var m = $("mcsvm");
+    if (!m) return;
+    var wg = $("wgrid"), cg = $("mcgrid");
+    wg.innerHTML = ""; cg.innerHTML = "";
+    WARDS.forEach(function(w){
+      var lb = document.createElement("label");
+      lb.innerHTML = '<input type="checkbox" class="wchk" value="' + w + '" checked> W' + w;
+      wg.appendChild(lb);
+    });
+    MCOLS.forEach(function(col){
+      var lb = document.createElement("label");
+      lb.innerHTML = '<input type="checkbox" class="cchk" value="' + col[0] + '" checked> ' + col[1];
+      cg.appendChild(lb);
+    });
+    function updateCounters(){
+      var wchks = wg.querySelectorAll(".wchk:checked");
+      var cchks = cg.querySelectorAll(".cchk:checked");
+      $("wselcnt").textContent = wchks.length + " of 18 selected";
+      $("cselcnt").textContent = cchks.length + " of " + MCOLS.length + " selected";
+      var tot = 0;
+      wchks.forEach(function(ck){ tot += COUNT[+ck.value] || 0; });
+      $("mcsvtotal").textContent = tot.toLocaleString("en-IN");
+      $("mcsvgo").disabled = (wchks.length === 0 || cchks.length === 0);
+    }
+    wg.addEventListener("change", updateCounters);
+    cg.addEventListener("change", updateCounters);
+    $("wselall").onclick = function(){ wg.querySelectorAll(".wchk").forEach(function(c){ c.checked = true; }); updateCounters(); };
+    $("wselnone").onclick = function(){ wg.querySelectorAll(".wchk").forEach(function(c){ c.checked = false; }); updateCounters(); };
+    $("cselall").onclick = function(){ cg.querySelectorAll(".cchk").forEach(function(c){ c.checked = true; }); updateCounters(); };
+    $("cselnone").onclick = function(){ cg.querySelectorAll(".cchk").forEach(function(c){ c.checked = false; }); updateCounters(); };
+    $("cselcontacts").onclick = function(){
+      var keep = { w:1, s:1, n:1, mob:1, fam:1, h:1, e:1, lmk:1 };
+      cg.querySelectorAll(".cchk").forEach(function(c){ c.checked = !!keep[c.value]; });
+      updateCounters();
+    };
+    $("mcsvx").onclick = function(){ m.style.display = "none"; };
+    m.onclick = function(e){ if (e.target === m) m.style.display = "none"; };
+    $("mcsvgo").onclick = doExportMasterCSV;
+  }
+
+  function doExportMasterCSV(){
+    if (!IDX){ toast("Loading voter index... please wait"); loadIndex(); return; }
+    var selWards = [];
+    document.querySelectorAll(".wchk:checked").forEach(function(c){ selWards.push(+c.value); });
+    selWards.sort(function(a,b){ return a-b; });
+    var selCols = [];
+    document.querySelectorAll(".cchk:checked").forEach(function(c){
+      var id = c.value;
+      var found = MCOLS.find(function(x){ return x[0] === id; });
+      if (found) selCols.push(found);
+    });
+    if (!selWards.length || !selCols.length){ toast("Select at least 1 ward and 1 column"); return; }
+
+    toast("Generating combined CSV for " + selWards.length + " wards...");
+    setTimeout(function(){
+      var marksByWard = {};
+      selWards.forEach(function(w){
+        marksByWard[w] = {
+          flg: getLS(w, "flags"), pty: getLS(w, "pty"), fams: getLS(w, "fams"),
+          mob: getLS(w, "mob"), oos: getLS(w, "oos"), cst: getLS(w, "cst"), lmk: getLS(w, "lmk")
+        };
+      });
+
+      var rows = [];
+      // Header row
+      rows.push(selCols.map(function(c){ return '"' + c[1].replace(/"/g, '""') + '"'; }).join(","));
+
+      // Filter and map voters
+      for (var i = 0; i < IDX.length; i++){
+        var r = IDX[i];
+        if (selWards.indexOf(r.w) === -1) continue;
+        var wm = marksByWard[r.w] || {};
+        var s = r.s;
+        var f = (wm.flg && wm.flg[s]) || {};
+        var flgStr = [f.d?"Dead":"", f.u?"Duplicate":"", f.o?"Out of station":"", f.t?"Teacher":""].filter(Boolean).join(",");
+
+        var line = selCols.map(function(col){
+          var val = "";
+          switch(col[0]){
+            case "s": val = r.s; break;
+            case "w": val = "W" + r.w; break;
+            case "n": val = r.n; break;
+            case "rt": val = ""; break;
+            case "rn": val = r.rn; break;
+            case "a": val = ""; break;
+            case "g": val = ""; break;
+            case "h": val = r.h; break;
+            case "e": val = r.e; break;
+            case "fam": val = (wm.fams && wm.fams[s]) || ""; break;
+            case "pty": val = (wm.pty && wm.pty[s]) || ""; break;
+            case "cst": val = (wm.cst && wm.cst[s]) || ""; break;
+            case "flg": val = flgStr; break;
+            case "tch": val = f.t ? "Teacher" : ""; break;
+            case "oos": val = (wm.oos && wm.oos[s]) || ""; break;
+            case "mob": val = (wm.mob && wm.mob[s]) || ""; break;
+            case "lmk": val = (wm.lmk && wm.lmk[s]) || ""; break;
+          }
+          return '"' + String(val==null?"":val).replace(/"/g, '""') + '"';
+        });
+        rows.push(line.join(","));
+      }
+
+      var csvTxt = "\ufeff" + rows.join("\r\n");
+      var blob = new Blob([csvTxt], { type:"text/csv;charset=utf-8;" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = (selWards.length === 18 ? "pamur-all-18-wards.csv" : "pamur-wards-combined.csv");
+      a.style.display = "none";
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ a.remove(); URL.revokeObjectURL(url); }, 1500);
+      $("mcsvm").style.display = "none";
+      toast("CSV downloaded (" + (rows.length - 1) + " voters)");
+    }, 40);
+  }
+
+  $("tmcsv").addEventListener("click", function(){
+    $("teammenu").hidden = true;
+    var m = $("mcsvm");
+    if (!m._inited){ initMasterCSVModal(); m._inited = true; }
+    m.style.display = "flex";
+  });
+
+  /* ================= 5. CONSTITUENCY WHATSAPP BROADCAST ================= */
+  function generateConstituencyReport(){
+    refreshProgress();
+    var t = lastTotals;
+    if (!t) return "";
+    var now = new Date();
+    var dateStr = now.toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" });
+    var timeStr = now.toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit" });
+    var pctAll = Math.round(100 * t.m / t.total);
+    var undAll = Math.max(0, t.total - t.ycp - t.tdp - t.jsp - t.oth - t.d);
+
+    var lines = [
+      "🗳️ *పామూరు 18 వార్డుల ఎన్నికల ప్రచార నివేదిక*",
+      "📅 తేదీ: " + dateStr + " (" + timeStr + ")",
+      "",
+      "👥 *మొత్తం ఓటర్లు:* " + t.total.toLocaleString("en-IN"),
+      "✅ *గుర్తించిన ఓటర్లు:* " + t.m.toLocaleString("en-IN") + " (" + pctAll + "%)",
+      "🟢 *YSRCP:* " + t.ycp.toLocaleString("en-IN") + " (" + (t.total ? Math.round(100*t.ycp/t.total) : 0) + "%)",
+      "🟡 *TDP:* " + t.tdp.toLocaleString("en-IN") + " (" + (t.total ? Math.round(100*t.tdp/t.total) : 0) + "%)",
+      "🔴 *JSP:* " + t.jsp.toLocaleString("en-IN") + " (" + (t.total ? Math.round(100*t.jsp/t.total) : 0) + "%)",
+      "⚪ *ఇతరులు / నిర్ణయం తీసుకోనివి:* " + undAll.toLocaleString("en-IN"),
+      "⚰️ *మరణించినవి (Dead):* " + t.d,
+      "✈️ *వలస / ఊర్లో లేరు (OOS):* " + t.o,
+      "📱 *సేవ్ చేసిన మొబైల్ నంబర్లు:* " + t.mb,
+      "",
+      "📋 *వార్డుల వారీ సర్వే ప్రగతి (Booth-wise):*"
+    ];
+
+    t.wards.forEach(function(w){
+      var pct = Math.round(100 * w.marked / w.total);
+      lines.push("W" + (w.w < 10 ? "0" + w.w : w.w) + ": " + w.marked + "/" + w.total + " (" + pct + "%) | 🟢Y:" + w.ycp + " 🟡T:" + w.tdp + " 🔴J:" + w.jsp);
+    });
+
+    lines.push("");
+    lines.push("🔗 లైవ్ డాష్‌బోర్డ్: " + location.origin + location.pathname);
+    return lines.join("\n");
+  }
+
+  $("report").onclick = function(){
+    var txt = generateConstituencyReport();
+    if (!txt){ toast("No progress data available yet"); return; }
+    $("reptxt").value = txt;
+    $("repmodal").style.display = "flex";
+  };
+  $("repx").onclick = function(){ $("repmodal").style.display = "none"; };
+  $("repmodal").onclick = function(e){ if (e.target === $("repmodal")) $("repmodal").style.display = "none"; };
+  $("repcopy").onclick = function(){
+    copyText($("reptxt").value);
+    toast("Report copied! Ready to paste in WhatsApp");
+  };
+  $("repwa").onclick = function(){
+    var txt = $("reptxt").value;
+    var u = "https://api.whatsapp.com/send?text=" + encodeURIComponent(txt);
+    window.open(u, "_blank");
+  };
+  
 })();
 </script>
 </body>

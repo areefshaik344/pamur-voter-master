@@ -58,6 +58,8 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 .fmore{display:block;margin:2px auto 0;font:inherit;font-size:11.5px;font-weight:800;color:var(--ac);background:none;border:1px solid var(--ac);border-radius:8px;padding:5px 12px;cursor:pointer}
 .fnote{font-size:10px;color:var(--mut);margin-top:7px;line-height:1.45}
 
+.cwstrip{font:inherit;font-size:10.5px;font-weight:700;color:var(--ac2);background:#e6f4ee;border:1px solid var(--ac);border-radius:8px;padding:4px 9px;margin-top:7px;max-height:70px;overflow:auto}
+.ccastechips{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
 /* ---------- campaign progress dashboard ---------- */
 .dash{flex:0 0 auto;background:var(--card);border-bottom:1px solid var(--bd);padding:10px 12px}
 .dhead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -268,6 +270,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     <button type="button" class="ftab" id="ftab2">Cross-ward duplicates</button>
   </div>
   <input id="fsearch" type="search" placeholder="Voter ID · House · Name · Serial" autocomplete="off" disabled>
+  <div class="ccastechips" id="fcastechips" role="group" aria-label="Caste filter"></div>
   <div class="fres" id="fres"></div>
   <div class="fnote" id="fnote">Search matches across every ward — tap a result to jump into that ward on that voter.<br>Phone numbers you've typed are kept on your device per ward, so they're not in this index.</div>
 </section>
@@ -561,6 +564,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     if (ev && ev.data && ev.data.type === "PAMUR_MARK_CHANGE"){
       phoneDirty = true;
       refreshProgress();
+      if (fmode === 0) renderCasteChips();
     }
   });
   setInterval(function(){ refreshProgress(); }, 4000);
@@ -693,12 +697,13 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     fsearch.disabled = true;
     fetch("pamur-index.json").then(function(r){ return r.json(); }).then(function(arr){
       IDX = arr.map(function(r){
-        var rec = { w:r[0], s:r[1], n:r[2]||"", rn:r[3]||"", h:r[4]||"", e:r[5]||"" };
+        var rec = { w:r[0], s:r[1], n:r[2]||"", rn:r[3]||"", h:r[4]||"", e:r[5]||"", c:(r[6]!=null?r[6]:"") };
         rec._q = ((rec.n+" "+rec.rn+" "+rec.h+" "+rec.e+" "+rec.s).toLowerCase());
         return rec;
       });
       IDX.forEach(function(rec){ idxBySerial[rec.w + "_" + rec.s] = rec; });
       fsearch.disabled = false;
+      renderCasteChips();
       if (fsearch.value.trim().length >= 2) runSearch(fsearch.value);
     }).catch(function(){
       fres.classList.add("show");
@@ -716,8 +721,10 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
       renderCrossWardDuplicates();
     } else {
       fsearch.style.display = "";
+      $("fcastechips").style.display = (m === 0) ? "" : "none";
       fsearch.placeholder = (m === 0) ? "Voter ID · House · Name · Serial" : "Team mobile number (4+ digits)";
       $("fnote").innerHTML = NOTES[m];
+      renderCasteChips();
       fres.classList.remove("show"); fres.innerHTML = "";
       if (fsearch.value.trim().length >= 2) runSearch(fsearch.value);
     }
@@ -732,18 +739,59 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   function runSearch(val){
     if (fmode === 0) doFind(val); else doPhone(val);
   }
-  var findState = { q:"", all:[], byWard:{}, ward:null, showAll:false };
+  var findState = { q:"", cf:"all", all:[], byWard:{}, ward:null, showAll:false };
+  /* MASTER CASTE FILTER */
+  var casteFilter = "all";
+  var CCHIPS = [ ["all","All"], ["Muslim","Muslim"], ["Hindu","Hindu"], ["Christian","Christian"], ["Other","Other"], ["unassigned","Unassigned"] ];
+  function effCaste(r){
+    var live = getLS(r.w, "cst");
+    return live[String(r.s)] || (live[r.s] != null ? live[r.s] : "") || r.c || "";
+  }
+  function casteCounts(){
+    var c = { all:0, Muslim:0, Hindu:0, Christian:0, Other:0, unassigned:0 };
+    for (var i = 0; i < IDX.length; i++){
+      var e = effCaste(IDX[i]);
+      if (e) c[e] = (c[e] || 0) + 1;
+    }
+    c.unassigned = IDX.length - c.Muslim - c.Hindu - c.Christian - c.Other;
+    c.all = IDX.length;
+    return c;
+  }
+  function renderCasteChips(){
+    var box = $("fcastechips");
+    if (!box) return;
+    if (fmode !== 0 || !IDX){ box.innerHTML = ""; return; }
+    var c = casteCounts();
+    var ids = { all:"cchipAll", Muslim:"cchipM", Hindu:"cchipH", Christian:"cchipC", Other:"cchipO", unassigned:"cchipU" };
+    box.innerHTML = "";
+    CCHIPS.forEach(function(pair){
+      var v = pair[0], b = document.createElement("button");
+      b.type = "button"; b.id = ids[v];
+      b.className = "fwchip" + (casteFilter === v ? " on" : "");
+      b.appendChild(document.createTextNode(pair[1] + " "));
+      var nsp = document.createElement("span"); nsp.className = "n"; nsp.textContent = c[v];
+      b.appendChild(nsp);
+      b.addEventListener("click", function(){
+        casteFilter = (casteFilter === v) ? "all" : v;
+        renderCasteChips();
+        runSearch(fsearch.value);
+      });
+      box.appendChild(b);
+    });
+  }
   function doFind(val){
     if (!IDX){ fres.classList.remove("show"); fres.innerHTML = ""; return; }
     var q = (val||"").trim().toLowerCase();
-    if (q.length < 2){
-      findState = { q:"", all:[], byWard:{}, ward:null, showAll:false };
+    if (q.length < 2 && casteFilter === "all"){
+      findState = { q:"", cf:"all", all:[], byWard:{}, ward:null, showAll:false };
       fres.classList.remove("show"); fres.innerHTML = ""; return;
     }
-    if (q !== findState.q) findState = { q:q, all:[], byWard:{}, ward:null, showAll:false };
+    if (q !== findState.q || findState.cf !== casteFilter) findState = { q:q, cf:casteFilter, all:[], byWard:{}, ward:null, showAll:false };
     if (!findState.all.length){
+      var cfv = (casteFilter === "unassigned") ? "" : casteFilter;
       for (var i = 0; i < IDX.length; i++){
-        if (IDX[i]._q.indexOf(q) !== -1){
+        if (casteFilter !== "all" && effCaste(IDX[i]) !== cfv) continue;
+        if (!q || IDX[i]._q.indexOf(q) !== -1){
           findState.all.push(IDX[i]);
           var w = IDX[i].w;
           findState.byWard[w] = (findState.byWard[w] || 0) + 1;
@@ -752,20 +800,31 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     }
     renderFindRollup();
   }
+  function wardCasteStrip(rows, cf){
+    var bw = {};
+    for (var i = 0; i < rows.length; i++) bw[rows[i].w] = (bw[rows[i].w] || 0) + 1;
+    var parts = [];
+    WARDS.forEach(function(w){ if (bw[w]) parts.push("W" + w + ":" + bw[w]); });
+    if (!parts.length) return null;
+    var d = document.createElement("div"); d.className = "cwstrip";
+    d.textContent = cf + " · " + parts.join(" ") + " · total " + rows.length;
+    return d;
+  }
   function renderFindRollup(){
     var st = findState;
     fres.innerHTML = "";
     if (!st.all.length){
       var em = document.createElement("div"); em.className = "frow empty";
-      em.textContent = "No voter matches “" + esc(st.q||"") + "” in any ward.";
+      em.textContent = st.q ? ("No " + (casteFilter !== "all" ? casteFilter + " " : "") + "voter matches “" + esc(st.q) + "” in any ward.") : ("No " + casteFilter + " voters found in any ward.");
       fres.appendChild(em); fres.classList.add("show"); return;
     }
     var total = st.all.length;
     var wards = Object.keys(st.byWard).map(Number).sort(function(a,b){ return st.byWard[b]-st.byWard[a] || a-b; });
     var sum = document.createElement("div"); sum.className = "fsum";
     var head = document.createElement("div"); head.className = "fshead";
-    head.textContent = "“" + st.q + "” → " + total + " voter" + (total===1?"":"s") + " in " + wards.length + " ward" + (wards.length===1?"":"s");
+    head.textContent = (st.q ? ("“" + st.q + "”" + (casteFilter !== "all" ? " (" + casteFilter + ")" : "") + " → ") : ((casteFilter === "unassigned" ? "Unassigned" : casteFilter) + " voters → ")) + total + " voter" + (total===1?"":"s") + " in " + wards.length + " ward" + (wards.length===1?"":"s");
     sum.appendChild(head);
+    if (casteFilter !== "all"){ var cs = wardCasteStrip(st.all, casteFilter); if (cs) sum.appendChild(cs); }
     var chips = document.createElement("div"); chips.className = "fwchips";
     function chip(label, sub, active, onClick){
       var c = document.createElement("button"); c.type = "button";
@@ -1498,7 +1557,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
             case "e": val = r.e; break;
             case "fam": val = (wm.fams && wm.fams[s]) || ""; break;
             case "pty": val = (wm.pty && wm.pty[s]) || ""; break;
-            case "cst": val = (wm.cst && wm.cst[s]) || ""; break;
+            case "cst": val = (wm.cst && (wm.cst[s] || wm.cst[String(s)])) || r.c || ""; break;
             case "flg": val = flgStr; break;
             case "tch": val = f.t ? "Teacher" : ""; break;
             case "oos": val = (wm.oos && wm.oos[s]) || ""; break;

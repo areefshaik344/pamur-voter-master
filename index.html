@@ -169,7 +169,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 /* ---------- gate (matches the standalone ward login screen) ---------- */
 #gate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(130% 100% at 50% 0%,#0f3d28 0%,#082818 55%,#041710 100%);padding:20px;overflow-y:auto}
 .gcard{background:#fff;border-radius:24px;max-width:350px;width:100%;padding:32px 28px 24px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:cardIn .35s ease both}
-#gate.err .gcard{animation:shake .5s}
+/* shake removed for smooth typing */
 .gcard .glogo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#12925a,#0a6b41);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;margin:0 auto 16px;letter-spacing:.5px;box-shadow:0 8px 24px rgba(18,146,90,.4)}
 .gcard h2{font-size:19px;margin:0 0 4px;color:#0e2418;font-weight:800}
 .gcard p{font-size:13px;color:#5a6f64;margin:0 0 18px;line-height:1.5}
@@ -1293,7 +1293,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
       afterUnlock();
       return;
     }
-    showErr(v.length > 0 || gateLast.length > 0);
+    showErr(true);
   }
   function mgToggle(){
     var p = $("mgpin"), b = $("mgshow"); if (!p||!b) return;
@@ -1304,7 +1304,14 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     b.setAttribute("aria-label", lbl); b.setAttribute("title", lbl);
     try{ p.focus(); }catch(e){}
   }
-  function mgInput(){ gateLast = norm($("mgpin").value); mgOpen(); }
+  function mgInput(){
+    var p = $("mgpin"); if (!p) return;
+    gateLast = norm(p.value);
+    showErr(false);
+    if (gateLast === PW){
+      mgOpen();
+    }
+  }
   function mgKey(ev){ if (ev && ev.key === "Enter"){ if (ev.preventDefault) ev.preventDefault(); mgOpen(); } }
 
   try{

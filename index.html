@@ -264,10 +264,10 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="19" r="2.2"/></svg>
       </button>
       <div id="kmenu" class="kmenu" style="display:none">
-        <button type="button" id="kreport">📊 Constituency report</button>
-        <button type="button" id="kteam">👥 Team marks & sync</button>
-        <button type="button" id="kshare">🔗 Share dashboard</button>
-        <button type="button" id="kmcsv">📑 Export 18-ward CSV</button>
+        <button type="button" id="report">📊 Constituency report</button>
+        <button type="button" id="team">👥 Team marks & sync</button>
+        <button type="button" id="share">🔗 Share dashboard</button>
+        <button type="button" id="tmcsv">📑 Export 18-ward CSV</button>
         <button type="button" id="klogout" class="klogout">🚪 Logout</button>
       </div>
     </div>
@@ -1012,26 +1012,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   $("lo").addEventListener("click", doLogout);
   $("klogout").addEventListener("click", doLogout);
 
-  $("kreport").addEventListener("click", function(){
-    var txt = generateConstituencyReport();
-    if (!txt){ toast("No progress data available yet"); return; }
-    $("reptxt").value = txt;
-    $("repmodal").style.display = "flex";
-  });
-  $("kteam").addEventListener("click", function(ev){
-    ev.stopPropagation();
-    var t = $("teammenu");
-    if (t) t.hidden = !t.hidden;
-  });
-  $("kshare").addEventListener("click", function(){
-    var u = curWard ? deepLinkURL(curWard, null) : (location.origin + location.pathname);
-    copyText(u);
-  });
-  $("kmcsv").addEventListener("click", function(){
-    var m = $("mcsvm");
-    if (!m._inited){ initMasterCSVModal(); m._inited = true; }
-    m.style.display = "flex";
-  });
+
 
   var tm = $("teammenu");
   $("team").addEventListener("click", function(ev){

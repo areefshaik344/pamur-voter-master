@@ -19,6 +19,19 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 .tbtns{margin-left:auto;display:flex;gap:6px;flex:0 0 auto}
 .sharebtn{flex:0 0 auto;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;font:inherit;font-size:12px;font-weight:700;border-radius:9px;padding:7px 12px;cursor:pointer}
 .sharebtn:active{transform:scale(.96)}
+/* header buttons & kebab menu */
+.topbtn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex:0 0 auto;-webkit-tap-highlight-color:transparent}
+.topbtn:active{transform:scale(.93);background:rgba(255,255,255,.28)}
+.topbtn svg{width:18px;height:18px}
+#lo svg{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#kb svg{fill:currentColor}
+.kwrap{position:relative;display:inline-flex}
+.kmenu{position:absolute;right:0;top:calc(100% + 8px);background:#fff;border:1px solid var(--bd);border-radius:12px;box-shadow:0 12px 32px rgba(8,40,24,.28);padding:6px;min-width:185px;z-index:9995;display:flex;flex-direction:column;gap:3px}
+.kmenu button{width:100%;height:38px;padding:0 12px;border:none;background:transparent;color:var(--ink);font:600 13px system-ui,-apple-system,sans-serif;border-radius:8px;text-align:left;display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap}
+.kmenu button:hover,.kmenu button:active{background:#e9f2ed;color:var(--ac)}
+.kmenu button.klogout{color:#c0392b}
+.kmenu button.klogout:hover,.kmenu button.klogout:active{background:#fdecea;color:#b3261e}
+
 /* team collection sheet (export / import marks) */
 .teammenu{position:fixed;top:54px;right:10px;z-index:9990;background:var(--card);border:1px solid var(--bd);border-radius:12px;box-shadow:0 12px 32px rgba(8,40,24,.3);display:flex;flex-direction:column;gap:2px;padding:6px}
 .teammenu[hidden]{display:none}
@@ -238,15 +251,26 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 </div>
 
 <header class="top">
-  <div class="logo">YSRCP</div>
   <div>
     <h1>Pamur Master Voter App</h1>
     <div class="sub" id="topsub">Wards 1–18 · 16,554 voters · pick a ward</div>
   </div>
   <div class="tbtns">
-    <button class="sharebtn" id="report" type="button" title="Copy a progress summary to paste in WhatsApp">Report</button>
-    <button class="sharebtn" id="team" type="button" title="Send or merge your marks with other phones">Team</button>
-    <button class="sharebtn" id="share" type="button">Share</button>
+    <button id="lo" class="topbtn" title="Logout" aria-label="Logout">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9M18.4 6.4a8 8 0 11-12.8 0"/></svg>
+    </button>
+    <div class="kwrap">
+      <button type="button" id="kb" class="topbtn" aria-label="More actions" title="More actions">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="19" r="2.2"/></svg>
+      </button>
+      <div id="kmenu" class="kmenu" style="display:none">
+        <button type="button" id="kreport">📊 Constituency report</button>
+        <button type="button" id="kteam">👥 Team marks & sync</button>
+        <button type="button" id="kshare">🔗 Share dashboard</button>
+        <button type="button" id="kmcsv">📑 Export 18-ward CSV</button>
+        <button type="button" id="klogout" class="klogout">🚪 Logout</button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -963,6 +987,52 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     if (!m.d && !m.u && !m.o) return null;
     return m;
   }
+  /* Kebab Menu & Logout Handlers */
+  var km = $("kmenu");
+  $("kb").addEventListener("click", function(ev){
+    ev.stopPropagation();
+    if ($("teammenu")) $("teammenu").hidden = true;
+    km.style.display = km.style.display === "none" ? "flex" : "none";
+  });
+  document.addEventListener("click", function(ev){
+    if (km && !ev.target.closest(".kwrap")) km.style.display = "none";
+  });
+  km.addEventListener("click", function(){
+    km.style.display = "none";
+  });
+
+  function doLogout(){
+    try{
+      sessionStorage.removeItem("pamurMasterUnlocked");
+      sessionStorage.removeItem("pamur_pw");
+      sessionStorage.removeItem("pamurMasterLastWard");
+    }catch(e){}
+    location.reload();
+  }
+  $("lo").addEventListener("click", doLogout);
+  $("klogout").addEventListener("click", doLogout);
+
+  $("kreport").addEventListener("click", function(){
+    var txt = generateConstituencyReport();
+    if (!txt){ toast("No progress data available yet"); return; }
+    $("reptxt").value = txt;
+    $("repmodal").style.display = "flex";
+  });
+  $("kteam").addEventListener("click", function(ev){
+    ev.stopPropagation();
+    var t = $("teammenu");
+    if (t) t.hidden = !t.hidden;
+  });
+  $("kshare").addEventListener("click", function(){
+    var u = curWard ? deepLinkURL(curWard, null) : (location.origin + location.pathname);
+    copyText(u);
+  });
+  $("kmcsv").addEventListener("click", function(){
+    var m = $("mcsvm");
+    if (!m._inited){ initMasterCSVModal(); m._inited = true; }
+    m.style.display = "flex";
+  });
+
   var tm = $("teammenu");
   $("team").addEventListener("click", function(ev){
     ev.stopPropagation();

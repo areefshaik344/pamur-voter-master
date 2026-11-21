@@ -380,8 +380,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 <script>
 (function(){
   "use strict";
-  var PW = "vote344";
-  var MKEY = "pamurMasterUnlocked";
+    var MKEY = "pamurMasterUnlocked";
   var WARDS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
   var COUNT = {}; WARDS.forEach(function(w){ COUNT[w] = (w===18)?931:919; });
   var TOTAL_V = WARDS.reduce(function(a,w){ return a+COUNT[w]; }, 0);
@@ -692,10 +691,38 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     "Search matches across every ward — tap a result to jump into that ward on that voter.<br>Phone numbers you've typed are kept on your device per ward, so they're not in this index.",
     "Finds the mobile numbers in the team book: numbers saved on THIS device, plus the shared book a team lead published. Tap the <b>Team</b> button, “Export shared phone book”, then publish the file so every phone can search all team numbers.<br>Green ring: same number saved in more than one place — check for duplicates."
   ];
-  function loadIndex(){
-    if (IDX) { fsearch.disabled = false; return; }
+  async function decryptIndex(pw){
+    if (IDX) { fsearch.disabled = false; return true; }
     fsearch.disabled = true;
-    fetch("pamur-index.json").then(function(r){ return r.json(); }).then(function(arr){
+    try {
+      var res = await fetch("pamur-index.enc");
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      var ab = await res.arrayBuffer();
+      var buf = new Uint8Array(ab);
+
+      var salt = buf.subarray(0, 16);
+      var iv = buf.subarray(16, 28);
+      var tag = buf.subarray(28, 44);
+      var ctext = buf.subarray(44);
+
+      var wcBuf = new Uint8Array(ctext.length + 16);
+      wcBuf.set(ctext, 0);
+      wcBuf.set(tag, ctext.length);
+
+      var enc = new TextEncoder();
+      var keyMat = await crypto.subtle.importKey("raw", enc.encode(pw), { name:"PBKDF2" }, false, ["deriveKey"]);
+      var derivedKey = await crypto.subtle.deriveKey(
+        { name:"PBKDF2", salt: salt, iterations: 10000, hash:"SHA-256" },
+        keyMat,
+        { name:"AES-GCM", length: 256 },
+        false,
+        ["decrypt"]
+      );
+
+      var decBuf = await crypto.subtle.decrypt({ name:"AES-GCM", iv: iv }, derivedKey, wcBuf);
+      var jsonStr = new TextDecoder().decode(decBuf);
+      var arr = JSON.parse(jsonStr);
+
       IDX = arr.map(function(r){
         var rec = { w:r[0], s:r[1], n:r[2]||"", rn:r[3]||"", h:r[4]||"", e:r[5]||"", c:(r[6]!=null?r[6]:"") };
         rec._q = ((rec.n+" "+rec.rn+" "+rec.h+" "+rec.e+" "+rec.s).toLowerCase());
@@ -703,112 +730,22 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
       });
       IDX.forEach(function(rec){ idxBySerial[rec.w + "_" + rec.s] = rec; });
       fsearch.disabled = false;
-      renderCasteChips();
-      if (fsearch.value.trim().length >= 2) runSearch(fsearch.value);
-    }).catch(function(){
-      fres.classList.add("show");
-      fres.innerHTML = '<div class="frow empty">Could not load the search index.</div>';
-    });
-  }
-  function setFMode(m){
-    fmode = m;
-    $("ftab0").classList.toggle("on", m === 0);
-    $("ftab1").classList.toggle("on", m === 1);
-    $("ftab2").classList.toggle("on", m === 2);
-    if (m === 2){
-      fsearch.style.display = "none";
-      $("fnote").innerHTML = NOTES[2];
-      renderCrossWardDuplicates();
-    } else {
-      fsearch.style.display = "";
-      $("fcastechips").style.display = (m === 0) ? "" : "none";
-      fsearch.placeholder = (m === 0) ? "Voter ID · House · Name · Serial" : "Team mobile number (4+ digits)";
-      $("fnote").innerHTML = NOTES[m];
-      renderCasteChips();
-      fres.classList.remove("show"); fres.innerHTML = "";
-      if (fsearch.value.trim().length >= 2) runSearch(fsearch.value);
+      renderFindRollup();
+      return true;
+    } catch(err){
+      fsearch.disabled = true;
+      throw err;
     }
   }
-  $("ftab2").addEventListener("click", function(){ setFMode(2); });
-  $("ftab0").addEventListener("click", function(){ setFMode(0); fsearch.focus(); });
-  $("ftab1").addEventListener("click", function(){ setFMode(1); fsearch.focus(); });
-  fsearch.addEventListener("input", function(){
-    clearTimeout(ftimer);
-    ftimer = setTimeout(function(){ runSearch(fsearch.value); }, 150);
-  });
-  function runSearch(val){
-    if (fmode === 0) doFind(val); else doPhone(val);
-  }
-  var findState = { q:"", cf:"all", all:[], byWard:{}, ward:null, showAll:false };
-  /* MASTER CASTE FILTER */
-  var casteFilter = "all";
-  var CCHIPS = [ ["all","All"], ["Muslim","Muslim"], ["Hindu","Hindu"], ["Christian","Christian"], ["Other","Other"], ["unassigned","Unassigned"] ];
-  function effCaste(r){
-    var live = getLS(r.w, "cst");
-    return live[String(r.s)] || (live[r.s] != null ? live[r.s] : "") || r.c || "";
-  }
-  function casteCounts(){
-    var c = { all:0, Muslim:0, Hindu:0, Christian:0, Other:0, unassigned:0 };
-    for (var i = 0; i < IDX.length; i++){
-      var e = effCaste(IDX[i]);
-      if (e) c[e] = (c[e] || 0) + 1;
-    }
-    c.unassigned = IDX.length - c.Muslim - c.Hindu - c.Christian - c.Other;
-    c.all = IDX.length;
-    return c;
-  }
-  function renderCasteChips(){
-    var box = $("fcastechips");
-    if (!box) return;
-    if (fmode !== 0 || !IDX){ box.innerHTML = ""; return; }
-    var c = casteCounts();
-    var ids = { all:"cchipAll", Muslim:"cchipM", Hindu:"cchipH", Christian:"cchipC", Other:"cchipO", unassigned:"cchipU" };
-    box.innerHTML = "";
-    CCHIPS.forEach(function(pair){
-      var v = pair[0], b = document.createElement("button");
-      b.type = "button"; b.id = ids[v];
-      b.className = "fwchip" + (casteFilter === v ? " on" : "");
-      b.appendChild(document.createTextNode(pair[1] + " "));
-      var nsp = document.createElement("span"); nsp.className = "n"; nsp.textContent = c[v];
-      b.appendChild(nsp);
-      b.addEventListener("click", function(){
-        casteFilter = (casteFilter === v) ? "all" : v;
-        renderCasteChips();
-        runSearch(fsearch.value);
+
+  function loadIndex(){
+    var pw = "";
+    try{ pw = sessionStorage.getItem("pamur_pw") || ""; }catch(e){}
+    if (pw) {
+      decryptIndex(pw).catch(function(err){
+        fnote.textContent = "Could not decrypt voter search index. Please log in again.";
       });
-      box.appendChild(b);
-    });
-  }
-  function doFind(val){
-    if (!IDX){ fres.classList.remove("show"); fres.innerHTML = ""; return; }
-    var q = (val||"").trim().toLowerCase();
-    if (q.length < 2 && casteFilter === "all"){
-      findState = { q:"", cf:"all", all:[], byWard:{}, ward:null, showAll:false };
-      fres.classList.remove("show"); fres.innerHTML = ""; return;
     }
-    if (q !== findState.q || findState.cf !== casteFilter) findState = { q:q, cf:casteFilter, all:[], byWard:{}, ward:null, showAll:false };
-    if (!findState.all.length){
-      var cfv = (casteFilter === "unassigned") ? "" : casteFilter;
-      for (var i = 0; i < IDX.length; i++){
-        if (casteFilter !== "all" && effCaste(IDX[i]) !== cfv) continue;
-        if (!q || IDX[i]._q.indexOf(q) !== -1){
-          findState.all.push(IDX[i]);
-          var w = IDX[i].w;
-          findState.byWard[w] = (findState.byWard[w] || 0) + 1;
-        }
-      }
-    }
-    renderFindRollup();
-  }
-  function wardCasteStrip(rows, cf){
-    var bw = {};
-    for (var i = 0; i < rows.length; i++) bw[rows[i].w] = (bw[rows[i].w] || 0) + 1;
-    var parts = [];
-    WARDS.forEach(function(w){ if (bw[w]) parts.push("W" + w + ":" + bw[w]); });
-    if (!parts.length) return null;
-    var d = document.createElement("div"); d.className = "cwstrip";
-    d.textContent = cf + " · " + parts.join(" ") + " · total " + rows.length;
-    return d;
   }
   function renderFindRollup(){
     var st = findState;
@@ -1325,15 +1262,23 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     var last = null; try{ last = sessionStorage.getItem("pamurMasterLastWard"); }catch(e){}
     if (pendingJump == null && WARDS.indexOf(+last) > -1 && !new URLSearchParams(location.search).get("w")) select(+last);
   }
-  function mgOpen(){
+  async function mgOpen(){
     var v = norm($("mgpin").value) || gateLast;
-    if (v === PW){
+    if (!v) { showErr(true); return; }
+    var btn = $("mgo");
+    if (btn) btn.textContent = "Unlocking...";
+    try {
+      await decryptIndex(v);
       showErr(false);
-      try{ sessionStorage.setItem(MKEY,"1"); }catch(e){}
+      try{
+        sessionStorage.setItem(MKEY, "1");
+        sessionStorage.setItem("pamur_pw", v);
+      }catch(e){}
       afterUnlock();
-      return;
+    } catch(err){
+      if (btn) btn.textContent = "Open list";
+      showErr(true);
     }
-    showErr(v.length > 0 || gateLast.length > 0);
   }
   function mgToggle(){
     var p = $("mgpin"), b = $("mgshow"); if (!p||!b) return;
@@ -1348,8 +1293,13 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   function mgKey(ev){ if (ev && ev.key === "Enter"){ if (ev.preventDefault) ev.preventDefault(); mgOpen(); } }
 
   try{
-    if (sessionStorage.getItem(MKEY) === "1"){
-      afterUnlock();
+    var savedPw = sessionStorage.getItem("pamur_pw") || "";
+    if (sessionStorage.getItem(MKEY) === "1" && savedPw){
+      decryptIndex(savedPw).then(function(){
+        afterUnlock();
+      }).catch(function(){
+        closeGate(false);
+      });
     } else {
       setTimeout(function(){ try{ $("mgpin").focus(); }catch(e){} }, 80);
     }

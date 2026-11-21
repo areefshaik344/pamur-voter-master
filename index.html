@@ -719,7 +719,8 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     if (IDX) { fsearch.disabled = false; return true; }
     fsearch.disabled = true;
     try {
-      var res = await fetch("pamur-index.enc");
+      var base = location.pathname.endsWith("/") ? location.pathname : (location.pathname + "/");
+      var res = await fetch(base + "pamur-index.enc");
       if (!res.ok) throw new Error("HTTP " + res.status);
       var ab = await res.arrayBuffer();
       var buf = new Uint8Array(ab);
@@ -1314,7 +1315,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     if (pendingJump == null && WARDS.indexOf(+last) > -1 && !new URLSearchParams(location.search).get("w")) select(+last);
   }
   async function mgOpen(){
-    var v = norm($("mgpin").value) || gateLast;
+    var v = (norm($("mgpin").value) || gateLast).toLowerCase().trim();
     if (!v) { showErr(true); return; }
     var btn = $("mgo");
     if (btn) btn.textContent = "Unlocking...";
@@ -1340,7 +1341,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     b.setAttribute("aria-label", lbl); b.setAttribute("title", lbl);
     try{ p.focus(); }catch(e){}
   }
-  function mgInput(){ gateLast = norm($("mgpin").value); mgOpen(); }
+  function mgInput(){ gateLast = norm($("mgpin").value); }
   function mgKey(ev){ if (ev && ev.key === "Enter"){ if (ev.preventDefault) ev.preventDefault(); mgOpen(); } }
 
   try{

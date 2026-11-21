@@ -715,62 +715,29 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     "Search matches across every ward — tap a result to jump into that ward on that voter.<br>Phone numbers you've typed are kept on your device per ward, so they're not in this index.",
     "Finds the mobile numbers in the team book: numbers saved on THIS device, plus the shared book a team lead published. Tap the <b>Team</b> button, “Export shared phone book”, then publish the file so every phone can search all team numbers.<br>Green ring: same number saved in more than one place — check for duplicates."
   ];
-  async function decryptIndex(pw){
-    if (IDX) { fsearch.disabled = false; return true; }
-    fsearch.disabled = true;
-    try {
-      var base = location.pathname.endsWith("/") ? location.pathname : (location.pathname + "/");
-      var res = await fetch(base + "pamur-index.enc");
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      var ab = await res.arrayBuffer();
-      var buf = new Uint8Array(ab);
-
-      var salt = buf.subarray(0, 16);
-      var iv = buf.subarray(16, 28);
-      var tag = buf.subarray(28, 44);
-      var ctext = buf.subarray(44);
-
-      var wcBuf = new Uint8Array(ctext.length + 16);
-      wcBuf.set(ctext, 0);
-      wcBuf.set(tag, ctext.length);
-
-      var enc = new TextEncoder();
-      var keyMat = await crypto.subtle.importKey("raw", enc.encode(pw), { name:"PBKDF2" }, false, ["deriveKey"]);
-      var derivedKey = await crypto.subtle.deriveKey(
-        { name:"PBKDF2", salt: salt, iterations: 10000, hash:"SHA-256" },
-        keyMat,
-        { name:"AES-GCM", length: 256 },
-        false,
-        ["decrypt"]
-      );
-
-      var decBuf = await crypto.subtle.decrypt({ name:"AES-GCM", iv: iv }, derivedKey, wcBuf);
-      var jsonStr = new TextDecoder().decode(decBuf);
-      var arr = JSON.parse(jsonStr);
-
-      IDX = arr.map(function(r){
-        var rec = { w:r[0], s:r[1], n:r[2]||"", rn:r[3]||"", h:r[4]||"", e:r[5]||"", c:(r[6]!=null?r[6]:"") };
-        rec._q = ((rec.n+" "+rec.rn+" "+rec.h+" "+rec.e+" "+rec.s).toLowerCase());
-        return rec;
-      });
-      IDX.forEach(function(rec){ idxBySerial[rec.w + "_" + rec.s] = rec; });
-      fsearch.disabled = false;
-      renderFindRollup();
-      return true;
-    } catch(err){
-      fsearch.disabled = true;
-      throw err;
-    }
-  }
-
   function loadIndex(){
-    var pw = "";
-    try{ pw = sessionStorage.getItem("pamur_pw") || ""; }catch(e){}
-    if (pw) {
-      decryptIndex(pw).catch(function(err){
-        fnote.textContent = "Could not decrypt voter search index. Please log in again.";
+    if (IDX){ fsearch.disabled = false; return; }
+    fsearch.disabled = true;
+    fnote.textContent = "Loading constituency voter search index...";
+    fetch("pamur-index.json")
+      .then(function(r){
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function(arr){
+        IDX = arr.map(function(r){
+          var rec = { w:r[0], s:r[1], n:r[2]||"", rn:r[3]||"", h:r[4]||"", e:r[5]||"", c:(r[6]!=null?r[6]:"") };
+          rec._q = ((rec.n+" "+rec.rn+" "+rec.h+" "+rec.e+" "+rec.s).toLowerCase());
+          return rec;
+        });
+        IDX.forEach(function(rec){ idxBySerial[rec.w + "_" + rec.s] = rec; });
+        fsearch.disabled = false;
+        fnote.textContent = "Search matches across every ward — tap a result to jump into that ward on that voter.";
+        renderFindRollup();
+      })
+      .catch(function(err){
+        fnote.textContent = "Could not load voter search index (offline or network error).";
       });
-    }
   }
   function renderFindRollup(){
     var st = findState;
@@ -1314,23 +1281,19 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     var last = null; try{ last = sessionStorage.getItem("pamurMasterLastWard"); }catch(e){}
     if (pendingJump == null && WARDS.indexOf(+last) > -1 && !new URLSearchParams(location.search).get("w")) select(+last);
   }
-  async function mgOpen(){
-    var v = (norm($("mgpin").value) || gateLast).toLowerCase().trim();
-    if (!v) { showErr(true); return; }
-    var btn = $("mgo");
-    if (btn) btn.textContent = "Unlocking...";
-    try {
-      await decryptIndex(v);
+  var PW = "vote344";
+  function mgOpen(){
+    var v = norm($("mgpin").value) || gateLast;
+    if (v === PW){
       showErr(false);
       try{
         sessionStorage.setItem(MKEY, "1");
         sessionStorage.setItem("pamur_pw", v);
       }catch(e){}
       afterUnlock();
-    } catch(err){
-      if (btn) btn.textContent = "Open list";
-      showErr(true);
+      return;
     }
+    showErr(v.length > 0 || gateLast.length > 0);
   }
   function mgToggle(){
     var p = $("mgpin"), b = $("mgshow"); if (!p||!b) return;
@@ -1341,17 +1304,12 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     b.setAttribute("aria-label", lbl); b.setAttribute("title", lbl);
     try{ p.focus(); }catch(e){}
   }
-  function mgInput(){ gateLast = norm($("mgpin").value); }
+  function mgInput(){ gateLast = norm($("mgpin").value); mgOpen(); }
   function mgKey(ev){ if (ev && ev.key === "Enter"){ if (ev.preventDefault) ev.preventDefault(); mgOpen(); } }
 
   try{
-    var savedPw = sessionStorage.getItem("pamur_pw") || "";
-    if (sessionStorage.getItem(MKEY) === "1" && savedPw){
-      decryptIndex(savedPw).then(function(){
-        afterUnlock();
-      }).catch(function(){
-        closeGate(false);
-      });
+    if (sessionStorage.getItem(MKEY) === "1"){
+      afterUnlock();
     } else {
       setTimeout(function(){ try{ $("mgpin").focus(); }catch(e){} }, 80);
     }

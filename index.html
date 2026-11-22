@@ -672,7 +672,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   /* ================= global finder (cross-ward index + phone) ================= */
   var IDX = null;              // [{w,s,n,rn,h,e,_q(lower match key)}]
   var idxBySerial = {};        // "w_s" -> record (for phone-finder name lookups)
-  var fsearch = $("fsearch"), fres = $("fres"), ftimer = null;
+  var fsearch = $("fsearch"), fres = $("fres"), fnote = $("fnote"), ftimer = null;
   var fmode = 0;              // 0 = voter index, 1 = phone (this device + shared book)
   var phoneDirty = true, phoneList = [], phoneBySerial = {};
   // Shared phone book: a committed JSON (pamur-phones.json) that a team lead
@@ -716,7 +716,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     "Finds the mobile numbers in the team book: numbers saved on THIS device, plus the shared book a team lead published. Tap the <b>Team</b> button, “Export shared phone book”, then publish the file so every phone can search all team numbers.<br>Green ring: same number saved in more than one place — check for duplicates."
   ];
   function loadIndex(){
-    if (IDX){ fsearch.disabled = false; return; }
+    if (IDX){ fsearch.disabled = false; renderCasteChips(); return; }
     fsearch.disabled = true;
     fnote.textContent = "Loading constituency voter search index...";
     fetch("pamur-index.json")
@@ -733,12 +733,144 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
         IDX.forEach(function(rec){ idxBySerial[rec.w + "_" + rec.s] = rec; });
         fsearch.disabled = false;
         fnote.textContent = "Search matches across every ward — tap a result to jump into that ward on that voter.";
-        renderFindRollup();
+        renderCasteChips();
+        if (casteFilter !== "all" || fsearch.value.trim().length >= 2) {
+          runSearch(fsearch.value);
+        }
       })
       .catch(function(err){
         fnote.textContent = "Could not load voter search index (offline or network error).";
       });
   }
+
+  function setFMode(m){
+    fmode = m;
+    $("ftab0").classList.toggle("on", m === 0);
+    $("ftab1").classList.toggle("on", m === 1);
+    $("ftab2").classList.toggle("on", m === 2);
+    if (m === 2){
+      fsearch.style.display = "none";
+      $("fnote").innerHTML = NOTES[2];
+      renderCrossWardDuplicates();
+    } else {
+      fsearch.style.display = "";
+      $("fcastechips").style.display = (m === 0) ? "" : "none";
+      fsearch.placeholder = (m === 0) ? "Voter ID · House · Name · Serial" : "Team mobile number (4+ digits)";
+      $("fnote").innerHTML = NOTES[m];
+      renderCasteChips();
+      fres.classList.remove("show"); fres.innerHTML = "";
+      if (fsearch.value.trim().length >= 2 || (m === 0 && casteFilter !== "all")) {
+        runSearch(fsearch.value);
+      }
+    }
+  }
+  $("ftab2").addEventListener("click", function(){ setFMode(2); });
+  $("ftab0").addEventListener("click", function(){ setFMode(0); fsearch.focus(); });
+  $("ftab1").addEventListener("click", function(){ setFMode(1); fsearch.focus(); });
+  fsearch.addEventListener("input", function(){
+    clearTimeout(ftimer);
+    ftimer = setTimeout(function(){ runSearch(fsearch.value); }, 150);
+  });
+  function runSearch(val){
+    if (fmode === 0) doFind(val); else doPhone(val);
+  }
+  var findState = { q:"", cf:"all", all:[], byWard:{}, ward:null, showAll:false };
+
+  /* MASTER CASTE FILTER & COUNTS */
+  var casteFilter = "all";
+  var CCHIPS = [
+    ["all","All"],
+    ["Muslim","Muslim"],
+    ["Hindu","Hindu"],
+    ["Christian","Christian"],
+    ["Other","Other"],
+    ["unassigned","Unassigned"]
+  ];
+
+  function effCaste(r){
+    var live = getLS(r.w, "cst");
+    return live[String(r.s)] || (live[r.s] != null ? live[r.s] : "") || r.c || "";
+  }
+
+  function casteCounts(){
+    var c = { all:0, Muslim:0, Hindu:0, Christian:0, Other:0, unassigned:0 };
+    if (!IDX) return c;
+    for (var i = 0; i < IDX.length; i++){
+      var e = effCaste(IDX[i]);
+      if (e) c[e] = (c[e] || 0) + 1;
+    }
+    c.unassigned = IDX.length - (c.Muslim||0) - (c.Hindu||0) - (c.Christian||0) - (c.Other||0);
+    c.all = IDX.length;
+    return c;
+  }
+
+  function renderCasteChips(){
+    var box = $("fcastechips");
+    if (!box) return;
+    if (fmode !== 0 || !IDX){ box.innerHTML = ""; return; }
+    var c = casteCounts();
+    var ids = { all:"cchipAll", Muslim:"cchipM", Hindu:"cchipH", Christian:"cchipC", Other:"cchipO", unassigned:"cchipU" };
+    box.innerHTML = "";
+    CCHIPS.forEach(function(pair){
+      var v = pair[0], b = document.createElement("button");
+      b.type = "button"; b.id = ids[v];
+      b.className = "fwchip" + (casteFilter === v ? " on" : "");
+      b.appendChild(document.createTextNode(pair[1] + " "));
+      var nsp = document.createElement("span"); nsp.className = "n"; nsp.textContent = c[v] || 0;
+      b.appendChild(nsp);
+      b.addEventListener("click", function(){
+        casteFilter = (casteFilter === v) ? "all" : v;
+        renderCasteChips();
+        runSearch(fsearch.value);
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function doFind(val){
+    if (!IDX){ fres.classList.remove("show"); fres.innerHTML = ""; return; }
+    var rawQ = (val || "").trim().toLowerCase();
+    if (rawQ.length < 2 && casteFilter === "all"){
+      findState = { q:"", cf:"all", all:[], byWard:{}, ward:null, showAll:false };
+      fres.classList.remove("show"); fres.innerHTML = ""; return;
+    }
+    if (rawQ !== findState.q || findState.cf !== casteFilter){
+      findState = { q:rawQ, cf:casteFilter, all:[], byWard:{}, ward:null, showAll:false };
+    }
+    if (!findState.all.length){
+      var cfv = (casteFilter === "unassigned") ? "" : casteFilter;
+      var tks = rawQ ? rawQ.split(/\s+/).filter(Boolean) : [];
+
+      for (var i = 0; i < IDX.length; i++){
+        var rec = IDX[i];
+        if (casteFilter !== "all" && effCaste(rec) !== cfv) continue;
+        if (tks.length > 0){
+          var hay = rec._q;
+          var match = true;
+          for (var t = 0; t < tks.length; t++){
+            if (hay.indexOf(tks[t]) === -1){ match = false; break; }
+          }
+          if (!match) continue;
+        }
+        findState.all.push(rec);
+        var w = rec.w;
+        findState.byWard[w] = (findState.byWard[w] || 0) + 1;
+      }
+    }
+    renderFindRollup();
+  }
+
+  function wardCasteStrip(rows, cf){
+    var bw = {};
+    for (var i = 0; i < rows.length; i++) bw[rows[i].w] = (bw[rows[i].w] || 0) + 1;
+    var parts = [];
+    WARDS.forEach(function(w){ if (bw[w]) parts.push("W" + w + ":" + bw[w]); });
+    if (!parts.length) return null;
+    var d = document.createElement("div"); d.className = "cwstrip";
+    d.textContent = cf + " · " + parts.join(" ") + " · total " + rows.length;
+    return d;
+  }
+
   function renderFindRollup(){
     var st = findState;
     fres.innerHTML = "";

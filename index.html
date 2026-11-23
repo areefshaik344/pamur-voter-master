@@ -73,6 +73,47 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 .fnote{font-size:10px;color:var(--mut);margin-top:7px;line-height:1.45}
 
 .cwstrip{font:inherit;font-size:10.5px;font-weight:700;color:var(--ac2);background:#e6f4ee;border:1px solid var(--ac);border-radius:8px;padding:4px 9px;margin-top:7px;max-height:70px;overflow:auto}
+
+.caste-breakdown-box{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.caste-subtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.csubtab{font:inherit;font-size:11px;font-weight:700;color:var(--mut);background:var(--bg);border:1px solid var(--bd);border-radius:999px;padding:4px 10px;cursor:pointer}
+.csubtab.on{background:#0e2418;color:#fff;border-color:#0e2418}
+.cmatrix-table-wrap{overflow-x:auto;background:#fff;border:1px solid var(--bd);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.cmatrix-table{width:100%;border-collapse:collapse;font-size:12px;text-align:right}
+.cmatrix-table th{background:#f8fafc;color:#475569;font-weight:700;padding:8px 10px;border-bottom:2px solid #e2e8f0;white-space:nowrap}
+.cmatrix-table td{padding:8px 10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+.cmatrix-table th:first-child, .cmatrix-table td:first-child{text-align:left;font-weight:800;color:#0e2418;position:sticky;left:0;background:#f8fafc;z-index:2}
+.cmatrix-table td:first-child{background:#fff}
+.cmatrix-table tr:hover td{background:#f8fafc}
+.cmatrix-table tr.tot-row td{background:#f1f5f9;font-weight:800;border-top:2px solid #cbd5e1;border-bottom:none;color:#0e2418}
+.cm-val{font-weight:700;cursor:pointer;padding:2px 6px;border-radius:6px}
+.cm-val:hover{text-decoration:underline}
+.cm-m{color:#15803d;background:#f0fdf4}
+.cm-am{color:#c2410c;background:#fff7ed}
+.cm-h{color:#854d0e;background:#fefce8}
+.cm-c{color:#1d4ed8;background:#eff6ff}
+.cm-u{color:#64748b}
+
+.cward-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:10px}
+.cward-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:6px}
+.cward-head{display:flex;justify-content:space-between;align-items:center}
+.cward-title{font-weight:800;font-size:13px;color:#0f172a}
+.cward-badge{font-weight:800;font-size:12px;padding:2px 8px;border-radius:999px}
+.cward-pct{font-size:11.5px;color:#64748b}
+.cward-bar-bg{height:8px;background:#f1f5f9;border-radius:999px;overflow:hidden;margin-top:2px}
+.cward-bar-fill{height:100%;border-radius:999px;transition:width 0.3s ease}
+.cward-actions{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.cward-btn{font:inherit;font-size:11px;font-weight:700;border:none;border-radius:6px;padding:4px 10px;cursor:pointer}
+.cward-btn-view{background:#f1f5f9;color:#334155}
+.cward-btn-view:hover{background:#e2e8f0}
+.cward-btn-open{background:#047857;color:#fff}
+.cward-btn-open:hover{background:#065f46}
+
+.cwstrip-grid{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.cwstrip-chip{font:inherit;font-size:11px;font-weight:700;background:#fff;border:1px solid var(--ac);color:var(--ac2);padding:2px 8px;border-radius:999px;cursor:pointer}
+.cwstrip-chip:hover{background:#e6f4ee}
+.cwstrip-chip.on{background:var(--ac2);color:#fff;border-color:var(--ac2)}
+
 .ccastechips{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
 /* ---------- campaign progress dashboard ---------- */
 .dash{flex:0 0 auto;background:var(--card);border-bottom:1px solid var(--bd);padding:10px 12px}
@@ -429,7 +470,8 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   <div class="ftabs">
     <button type="button" class="ftab on" id="ftab0">Voter index</button>
     <button type="button" class="ftab" id="ftab1">Phone · team book</button>
-    <button type="button" class="ftab" id="ftab2">Cross-ward duplicates</button>
+    <button type="button" class="ftab" id="ftab2">Duplicates</button>
+    <button type="button" class="ftab" id="ftab3">📊 Caste Breakdown</button>
   </div>
   <input id="fsearch" type="search" placeholder="Name · House · Voter ID · Mobile · Serial" autocomplete="off" disabled>
   <div class="ccastechips" id="fcastechips" role="group" aria-label="Caste filter"></div>
@@ -887,14 +929,21 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     $("ftab0").classList.toggle("on", m === 0);
     $("ftab1").classList.toggle("on", m === 1);
     $("ftab2").classList.toggle("on", m === 2);
+    if ($("ftab3")) $("ftab3").classList.toggle("on", m === 3);
     if (m === 2){
       fsearch.style.display = "none";
+      $("fcastechips").style.display = "none";
       $("fnote").innerHTML = NOTES[2];
       renderCrossWardDuplicates();
+    } else if (m === 3){
+      fsearch.style.display = "none";
+      $("fcastechips").style.display = "none";
+      $("fnote").innerHTML = NOTES[3];
+      renderCasteMatrix();
     } else {
       fsearch.style.display = "";
       $("fcastechips").style.display = (m === 0) ? "" : "none";
-      fsearch.placeholder = (m === 0) ? "Voter ID · House · Name · Serial" : "Team mobile number (4+ digits)";
+      fsearch.placeholder = (m === 0) ? "Name · House · Voter ID · Mobile · Serial" : "Team mobile number (4+ digits)";
       $("fnote").innerHTML = NOTES[m];
       renderCasteChips();
       fres.classList.remove("show"); fres.innerHTML = "";
@@ -904,6 +953,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     }
   }
   $("ftab2").addEventListener("click", function(){ setFMode(2); });
+  if ($("ftab3")) $("ftab3").addEventListener("click", function(){ setFMode(3); });
   $("ftab0").addEventListener("click", function(){ setFMode(0); fsearch.focus(); });
   $("ftab1").addEventListener("click", function(){ setFMode(1); fsearch.focus(); });
   fsearch.addEventListener("input", function(){
@@ -1007,11 +1057,35 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
   function wardCasteStrip(rows, cf){
     var bw = {};
     for (var i = 0; i < rows.length; i++) bw[rows[i].w] = (bw[rows[i].w] || 0) + 1;
-    var parts = [];
-    WARDS.forEach(function(w){ if (bw[w]) parts.push("W" + w + ":" + bw[w]); });
-    if (!parts.length) return null;
+    var hasAny = false;
+    WARDS.forEach(function(w){ if (bw[w]) hasAny = true; });
+    if (!hasAny) return null;
+
     var d = document.createElement("div"); d.className = "cwstrip";
-    d.textContent = cf + " · " + parts.join(" ") + " · total " + rows.length;
+    var topTitle = document.createElement("div");
+    topTitle.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-weight:800";
+    topTitle.innerHTML = '<span>' + (cf === "all" ? "All Castes" : cf) + ' voters ward-wise (Total: ' + rows.length.toLocaleString("en-IN") + ')</span>' +
+      '<button type="button" style="background:none;border:none;color:var(--ac2);font-weight:800;font-size:11px;cursor:pointer;text-decoration:underline" onclick="setFMode(3)">📊 Full Matrix</button>';
+    d.appendChild(topTitle);
+
+    var grid = document.createElement("div"); grid.className = "cwstrip-grid";
+    WARDS.forEach(function(w){
+      var count = bw[w] || 0;
+      if (!count) return;
+      var chip = document.createElement("button"); chip.type = "button";
+      var isCurWard = (findState.ward === w);
+      chip.className = "cwstrip-chip" + (isCurWard ? " on" : "");
+      chip.textContent = "W" + w + ": " + count;
+      chip.title = "Filter Ward " + w;
+      chip.addEventListener("click", function(ev){
+        ev.stopPropagation();
+        findState.ward = (findState.ward === w) ? null : w;
+        findState.showAll = false;
+        renderFindRollup();
+      });
+      grid.appendChild(chip);
+    });
+    d.appendChild(grid);
     return d;
   }
 
@@ -2110,7 +2184,197 @@ if ($("slipimgbtn")) {
     return { byName:nameGroups, byEpic:epicGroups };
   }
 
-  function renderCrossWardDuplicates(){
+  
+  var curCasteTab = "all";
+  function renderCasteMatrix(){
+    if (!IDX){
+      fres.classList.add("show");
+      fres.innerHTML = '<div class="frow empty">Loading constituency voter index...</div>';
+      loadIndex();
+      return;
+    }
+
+    var matrix = {};
+    WARDS.forEach(function(w){
+      matrix[w] = { total: 0, Muslim: 0, "Arya Maratha": 0, Hindu: 0, Christian: 0, Other: 0, unassigned: 0 };
+    });
+
+    var totals = { total: 0, Muslim: 0, "Arya Maratha": 0, Hindu: 0, Christian: 0, Other: 0, unassigned: 0 };
+
+    for (var i = 0; i < IDX.length; i++){
+      var rec = IDX[i];
+      var w = rec.w;
+      if (!matrix[w]) continue;
+      var c = effCaste(rec) || "unassigned";
+      matrix[w].total++;
+      totals.total++;
+      if (matrix[w][c] != null){
+        matrix[w][c]++;
+        totals[c]++;
+      } else {
+        matrix[w].Other++;
+        totals.Other++;
+      }
+    }
+
+    fres.innerHTML = "";
+    var wrap = document.createElement("div");
+    wrap.className = "caste-breakdown-box";
+
+    // Subtabs: All matrix vs individual caste
+    var subtabs = document.createElement("div");
+    subtabs.className = "caste-subtabs";
+
+    var tabsList = [
+      ["all", "📊 Full Matrix (" + totals.total.toLocaleString("en-IN") + ")"],
+      ["Muslim", "🟢 Muslim (" + totals.Muslim.toLocaleString("en-IN") + ")"],
+      ["Arya Maratha", "🟠 Arya Maratha (" + totals["Arya Maratha"].toLocaleString("en-IN") + ")"],
+      ["Hindu", "🟡 Hindu (" + totals.Hindu.toLocaleString("en-IN") + ")"],
+      ["Christian", "🔵 Christian (" + totals.Christian.toLocaleString("en-IN") + ")"],
+      ["unassigned", "⚪ Unassigned (" + totals.unassigned.toLocaleString("en-IN") + ")"]
+    ];
+
+    tabsList.forEach(function(pair){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "csubtab" + (curCasteTab === pair[0] ? " on" : "");
+      b.textContent = pair[1];
+      b.addEventListener("click", function(){
+        curCasteTab = pair[0];
+        renderCasteMatrix();
+      });
+      subtabs.appendChild(b);
+    });
+    wrap.appendChild(subtabs);
+
+    if (curCasteTab === "all"){
+      // Full Matrix Table
+      var tblWrap = document.createElement("div");
+      tblWrap.className = "cmatrix-table-wrap";
+      var tbl = document.createElement("table");
+      tbl.className = "cmatrix-table";
+
+      var thead = document.createElement("thead");
+      thead.innerHTML = '<tr>' +
+        '<th>Ward</th>' +
+        '<th>Total</th>' +
+        '<th style="color:#15803d">Muslim</th>' +
+        '<th style="color:#15803d">%</th>' +
+        '<th style="color:#c2410c">Arya Maratha</th>' +
+        '<th style="color:#c2410c">%</th>' +
+        '<th style="color:#854d0e">Hindu</th>' +
+        '<th style="color:#1d4ed8">Christian</th>' +
+        '<th>Other</th>' +
+        '<th style="color:#64748b">Unassigned</th>' +
+      '</tr>';
+      tbl.appendChild(thead);
+
+      var tbody = document.createElement("tbody");
+      WARDS.forEach(function(w){
+        var d = matrix[w];
+        var mPct = d.total ? ((d.Muslim / d.total) * 100).toFixed(1) + "%" : "0%";
+        var amPct = d.total ? ((d["Arya Maratha"] / d.total) * 100).toFixed(1) + "%" : "0%";
+        var tr = document.createElement("tr");
+
+        tr.innerHTML = '<td><b>Ward ' + w + '</b></td>' +
+          '<td>' + d.total.toLocaleString("en-IN") + '</td>' +
+          '<td><span class="cm-val cm-m" data-w="' + w + '" data-c="Muslim">' + d.Muslim + '</span></td>' +
+          '<td style="color:#15803d;font-size:11px">' + mPct + '</td>' +
+          '<td><span class="cm-val cm-am" data-w="' + w + '" data-c="Arya Maratha">' + d["Arya Maratha"] + '</span></td>' +
+          '<td style="color:#c2410c;font-size:11px">' + amPct + '</td>' +
+          '<td><span class="cm-val cm-h" data-w="' + w + '" data-c="Hindu">' + d.Hindu + '</span></td>' +
+          '<td><span class="cm-val cm-c" data-w="' + w + '" data-c="Christian">' + d.Christian + '</span></td>' +
+          '<td>' + d.Other + '</td>' +
+          '<td><span class="cm-val cm-u" data-w="' + w + '" data-c="unassigned">' + d.unassigned + '</span></td>';
+        tbody.appendChild(tr);
+      });
+
+      // Totals row
+      var totTr = document.createElement("tr");
+      totTr.className = "tot-row";
+      var totMPct = totals.total ? ((totals.Muslim / totals.total) * 100).toFixed(1) + "%" : "0%";
+      var totAmPct = totals.total ? ((totals["Arya Maratha"] / totals.total) * 100).toFixed(1) + "%" : "0%";
+
+      totTr.innerHTML = '<td><b>Constituency</b></td>' +
+        '<td>' + totals.total.toLocaleString("en-IN") + '</td>' +
+        '<td><span class="cm-val cm-m" data-c="Muslim">' + totals.Muslim.toLocaleString("en-IN") + '</span></td>' +
+        '<td style="color:#15803d;font-size:11.5px">' + totMPct + '</td>' +
+        '<td><span class="cm-val cm-am" data-c="Arya Maratha">' + totals["Arya Maratha"].toLocaleString("en-IN") + '</span></td>' +
+        '<td style="color:#c2410c;font-size:11.5px">' + totAmPct + '</td>' +
+        '<td><span class="cm-val cm-h" data-c="Hindu">' + totals.Hindu.toLocaleString("en-IN") + '</span></td>' +
+        '<td><span class="cm-val cm-c" data-c="Christian">' + totals.Christian.toLocaleString("en-IN") + '</span></td>' +
+        '<td>' + totals.Other + '</td>' +
+        '<td><span class="cm-val cm-u" data-c="unassigned">' + totals.unassigned.toLocaleString("en-IN") + '</span></td>';
+      tbody.appendChild(totTr);
+
+      tbl.appendChild(tbody);
+      tblWrap.appendChild(tbl);
+      wrap.appendChild(tblWrap);
+
+      // Add click listener to drill down
+      tbl.addEventListener("click", function(ev){
+        var cell = ev.target.closest(".cm-val");
+        if (!cell) return;
+        var w = cell.getAttribute("data-w");
+        var c = cell.getAttribute("data-c");
+        if (!c) return;
+        setFMode(0);
+        casteFilter = c;
+        if (w) findState.ward = +w;
+        renderCasteChips();
+        runSearch("");
+      });
+    } else {
+      // Individual Caste Deep-Dive Ranked Grid
+      var cf = curCasteTab;
+      var cColor = (cf === "Muslim") ? "#15803d" : (cf === "Arya Maratha") ? "#c2410c" : (cf === "Hindu") ? "#854d0e" : (cf === "Christian") ? "#1d4ed8" : "#64748b";
+      var cBg = (cf === "Muslim") ? "#f0fdf4" : (cf === "Arya Maratha") ? "#fff7ed" : (cf === "Hindu") ? "#fefce8" : (cf === "Christian") ? "#eff6ff" : "#f1f5f9";
+      var cBarColor = (cf === "Muslim") ? "#16a34a" : (cf === "Arya Maratha") ? "#ea580c" : (cf === "Hindu") ? "#ca8a04" : (cf === "Christian") ? "#2563eb" : "#64748b";
+
+      var sortedWards = WARDS.slice().sort(function(a,b){
+        return (matrix[b][cf] || 0) - (matrix[a][cf] || 0) || a - b;
+      });
+
+      var grid = document.createElement("div");
+      grid.className = "cward-grid";
+
+      sortedWards.forEach(function(w){
+        var cnt = matrix[w][cf] || 0;
+        var tot = matrix[w].total || 1;
+        var pct = ((cnt / tot) * 100).toFixed(1);
+
+        var card = document.createElement("div");
+        card.className = "cward-card";
+        card.innerHTML = '<div class="cward-head">' +
+          '<span class="cward-title">Ward ' + w + '</span>' +
+          '<span class="cward-badge" style="background:' + cBg + ';color:' + cColor + '">' + cnt + ' voters</span>' +
+        '</div>' +
+        '<div class="cward-pct">' + pct + '% of Ward ' + w + ' voters (' + cnt + ' of ' + tot + ')</div>' +
+        '<div class="cward-bar-bg"><div class="cward-bar-fill" style="width:' + pct + '%;background:' + cBarColor + '"></div></div>' +
+        '<div class="cward-actions">' +
+          '<button type="button" class="cward-btn cward-btn-view" data-w="' + w + '">🔍 View ' + cf + ' voters</button>' +
+          '<button type="button" class="cward-btn cward-btn-open" onclick="openWard(' + w + ')">Open Ward App →</button>' +
+        '</div>';
+
+        card.querySelector(".cward-btn-view").addEventListener("click", function(){
+          setFMode(0);
+          casteFilter = cf;
+          findState.ward = w;
+          renderCasteChips();
+          runSearch("");
+        });
+
+        grid.appendChild(card);
+      });
+
+      wrap.appendChild(grid);
+    }
+
+    fres.appendChild(wrap);
+    fres.classList.add("show");
+  }
+
+function renderCrossWardDuplicates(){
     if (!IDX){
       fres.classList.add("show");
       fres.innerHTML = '<div class="frow empty">Loading voter index for duplicate scan...</div>';

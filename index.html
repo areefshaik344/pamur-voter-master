@@ -430,7 +430,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     <button type="button" class="ftab" id="ftab1">Phone · team book</button>
     <button type="button" class="ftab" id="ftab2">Cross-ward duplicates</button>
   </div>
-  <input id="fsearch" type="search" placeholder="Voter ID · House · Name · Serial" autocomplete="off" disabled>
+  <input id="fsearch" type="search" placeholder="Name · House · Voter ID · Mobile · Serial" autocomplete="off" disabled>
   <div class="ccastechips" id="fcastechips" role="group" aria-label="Caste filter"></div>
   <div class="fres" id="fres"></div>
   <div class="fnote" id="fnote">Search matches across every ward — tap a result to jump into that ward on that voter.<br>Phone numbers you've typed are kept on your device per ward, so they're not in this index.</div>
@@ -967,6 +967,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
 
   function doFind(val){
     if (!IDX){ fres.classList.remove("show"); fres.innerHTML = ""; return; }
+    if (phoneDirty) buildPhone();
     var rawQ = (val || "").trim().toLowerCase();
     if (rawQ.length < 2 && casteFilter === "all"){
       findState = { q:"", cf:"all", all:[], byWard:{}, ward:null, showAll:false };
@@ -983,7 +984,10 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
         var rec = IDX[i];
         if (casteFilter !== "all" && effCaste(rec) !== cfv) continue;
         if (tks.length > 0){
-          var hay = rec._q;
+          var ph = phoneBySerial[rec.w + "_" + rec.s] || rec._phone || "";
+          var phDig = ph ? ph.replace(/\D/g, "") : "";
+          var wTag = " w" + rec.w + " ward" + rec.w + " ward " + rec.w + " " + rec.w;
+          var hay = rec._q + wTag + (ph ? (" " + ph.toLowerCase() + " " + phDig) : "");
           var match = true;
           for (var t = 0; t < tks.length; t++){
             if (hay.indexOf(tks[t]) === -1){ match = false; break; }
@@ -1077,7 +1081,7 @@ body{margin:0;font:14px/1.4 system-ui,"Noto Sans Telugu","Nirmala UI",sans-serif
     var sharedTag = (kind === "phone" && r.src === "shared") ? '<span class="fshared">team book</span>' : "";
     var subMeta = (kind === "phone"
       ? '<div class="fm">☎ ' + esc(r.num) + ' · #' + r.s + ' ' + sharedTag + '</div>'
-      : '<div class="fm">House ' + esc(r.h) + ' · ' + esc(r.e) + ' · #' + r.s + (r.rn ? ' · s/o ' + esc(r.rn) : '') + '</div>');
+      : '<div class="fm">House ' + esc(r.h) + ' · ' + esc(r.e) + ' · #' + r.s + (r.rn ? ' · s/o ' + esc(r.rn) : '') + (num ? ' · <span style="color:#047857;font-weight:700">☎ ' + esc(num) + '</span>' : '') + '</div>');
 
     d.innerHTML =
       '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px"><div><span class="fw">Ward ' + r.w + '</span><span class="fn">' + esc(r.n) + '</span></div><div>' + actionsHtml + '</div></div>' +

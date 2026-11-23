@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pamur-master-v1';
+const CACHE_NAME = 'pamur-master-v3';
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(['./', 'index.html', 'pamur-phones.json', 'pamur-index.json']))

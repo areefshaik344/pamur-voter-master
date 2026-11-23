@@ -1223,9 +1223,9 @@ if ($("slipimgbtn")) {
     ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#cbd5e1";
     ctx.beginPath(); ctx.roundRect(b4X, bY, bW, bH, 12); ctx.fill(); ctx.stroke();
     ctx.fillStyle = "#1e293b"; ctx.font = "bold 18px system-ui";
-    ctx.fillText("🎟️", b4X + bW/2, bY + 30);
+    ctx.fillText((w===10||w===13?"🍲":w===6?"🪑":(w===14||w===16?"👗":"🗳️")), b4X + bW/2, bY + 28);
     ctx.fillStyle = "#334155"; ctx.font = "600 11px system-ui";
-    ctx.fillText("White (" + w + "వ వార్డు)", b4X + bW/2, bY + 52);
+    ctx.fillText("White (" + w + "వ వార్డు)", b4X + bW/2, bY + 50);
 
     // Rows
     var tY = 214;
@@ -1234,8 +1234,8 @@ if ($("slipimgbtn")) {
 
     var rows = [
       ["ఓటరు క్రమ సంఖ్య (Serial)", "#" + r.s],
-      ["సర్పంచ్ గుర్తు (Pink)", "✂️ కత్తెర"],
-      ["వార్డు గుర్తు (White)", sym.name],
+      ["సర్పంచ్ గుర్తు (Pink)", "✂️"],
+      ["వార్డు గుర్తు (White)", (w===10||w===13?"🍲":w===6?"🪑":(w===14||w===16?"👗":"🗳️"))],
       ["ఓటరు పేరు (Name)", r.n],
       ["బంధువు పేరు (Relative)", r.rn || "-"],
       ["ఇంటి నంబర్ (House)", r.h || "-"],
